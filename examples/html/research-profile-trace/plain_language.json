@@ -1,0 +1,76 @@
+{
+  "audits": {
+    "h1": {
+      "mechanism_steps": [
+        {
+          "from": "structured pruning",
+          "mechanism": "head-level pruning leaves factual recall paths intact",
+          "relation": "removes",
+          "to": "redundant attention heads",
+          "verdict": "plausible"
+        },
+        {
+          "from": "factuality-preserving redundancy map",
+          "mechanism": "target choice moderates factuality loss",
+          "relation": "predicts",
+          "to": "safe compression ratios",
+          "verdict": "needs evidence"
+        }
+      ]
+    },
+    "h2": {
+      "mechanism_steps": [
+        {
+          "from": "structured pruning",
+          "mechanism": "accuracy is stable until redundancy is exhausted",
+          "relation": "crosses",
+          "to": "factuality cliff threshold",
+          "verdict": "testable"
+        }
+      ]
+    }
+  },
+  "claim": "When does structured pruning reduce inference cost while preserving factual accuracy?",
+  "hypotheses": {
+    "h1": {
+      "headline": "Prune the parts that are redundant for factual recall first.",
+      "how_to_check": "Run matched head-first and MLP-first ablations at the same sparsity and latency budgets, then compare factual QA accuracy.",
+      "key_terms": [
+        {
+          "plain_meaning": "removing whole model components rather than individual weights",
+          "source": "Example profile",
+          "term": "structured pruning"
+        },
+        {
+          "plain_meaning": "whether answers preserve factual claims under evaluation",
+          "source": "Example profile",
+          "term": "factual accuracy"
+        }
+      ],
+      "status": "This is a testable idea, not a proven conclusion.",
+      "what_might_be_happening": "Some attention heads may duplicate routing information, while MLP channels may carry entity-specific facts that factual QA needs.",
+      "what_would_change_our_mind": "The idea weakens if MLP-first pruning preserves factuality equally well at matched latency.",
+      "why_it_matters": "The result would turn structured pruning from a generic compression knob into a safer target-selection policy."
+    },
+    "h2": {
+      "headline": "A factuality cliff may mark the useful pruning limit.",
+      "how_to_check": "Sweep pruning ratios across benchmarks and fit piecewise curves for latency and factual accuracy.",
+      "key_terms": [
+        {
+          "plain_meaning": "the point where factual accuracy starts falling faster than latency improves",
+          "source": "Example profile",
+          "term": "factuality cliff threshold"
+        }
+      ],
+      "status": "This is a testable idea, not a proven conclusion.",
+      "what_might_be_happening": "Pruning may improve latency smoothly while factual accuracy stays stable only up to a threshold, then drops quickly.",
+      "what_would_change_our_mind": "The idea weakens if accuracy declines linearly with no detectable threshold.",
+      "why_it_matters": "A threshold curve would help choose compression ratios that save inference cost without silently sacrificing factuality."
+    }
+  },
+  "reader": {
+    "home_field": "applied machine learning",
+    "lexicon_source": "neutral public example"
+  },
+  "seed_kind": "research_question"
+}

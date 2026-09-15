@@ -1,0 +1,77 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 736 648" width="736" height="648" role="img" aria-labelledby="title description">
+  <title id="title">Creativity, grounding and deployment by agent role</title>
+  <desc id="description">Qualitative estimates as of September 2026. Bubble size and colour indicate personal computer, GPU workstation or hosted frontier service, not proportional resource requirements. Synthesist: Frontier; local 4–32B. Primary generator. Hosted frontier is retained provisionally; its parameter count and exact hardware are unknown. The 4–32B local alternatives are evaluation candidates. Critic Panel: 32B + strong reviewer. Primary independent critique. Workstation placement covers the 32B local seat; a retained strong reviewer may use a hosted service. This is not the full panel hardware budget. Evidence Reviewer: 14–32B. Reviews seed evidence. Newly generated hypothesis premises do not currently receive this review. Extraction: 7–9B. Preserves the seed concepts, relation direction and scope; does not independently validate a new hypothesis. Experiment Designer: 32B start. Creative experiment design after hypothesis selection. Workstation placement reflects the 32B starting candidate. 14B is a lower-cost candidate; 7B an exploratory baseline. Experiment Validator: 8–32B. Reviews the proposed test, not hypothesis truth. Workstation placement budgets for the upper end of the local candidate range; an 8B model may fit a personal computer. A strong reviewer is retained initially and may use a hosted service. Elaborator: ≈7B. Rewrites supplied content and should preserve uncertainty without inventing new scientific claims.</desc>
+  <style>svg { color-scheme: light dark; --bg: #ffffff; --fg: #252525; --muted: #606060; --line: #dddddd; --personal: #339cff; --workstation: #e25507; --hosted: #924ff7; }
+@media (prefers-color-scheme: dark) { svg { --bg: #181818; --fg: #f3f3f3; --muted: #a4a4a4; --line: #373737; --workstation: #fb6a22; --hosted: #ad7bf9; } }
+text { fill: var(--fg); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; font-size: 12px; font-weight: 400; }
+.muted { fill: var(--muted); } .name { font-weight: 500; } .title { font-size: 16px; font-weight: 500; }
+.frame { fill: none; stroke: var(--line); } .grid { stroke: var(--line); opacity: .4; }
+.tier1 { fill: var(--personal); } .tier2 { fill: var(--workstation); } .tier3 { fill: var(--hosted); }
+</style>
+  <rect width="736" height="648" fill="var(--bg)" />
+  <text x="16" y="24" class="title">Creativity, grounding &amp; deployment</text>
+  <text x="16" y="43" class="muted">Contribution to generated hypotheses · qualitative placement</text>
+  <g transform="translate(0 50)">
+    <rect x="66" y="20" width="654" height="440" class="frame" />
+    <line x1="138.536" x2="138.536" y1="20" y2="460" class="grid" />
+    <text x="138.536" y="482" text-anchor="middle">Low</text>
+    <line x1="393.0" x2="393.0" y1="20" y2="460" class="grid" />
+    <text x="393.0" y="482" text-anchor="middle">Moderate</text>
+    <line x1="647.464" x2="647.464" y1="20" y2="460" class="grid" />
+    <text x="647.464" y="482" text-anchor="middle">High</text>
+    <line x1="66" x2="720" y1="398.929" y2="398.929" class="grid" />
+    <text x="56" y="402.929" text-anchor="end">Low</text>
+    <line x1="66" x2="720" y1="240.0" y2="240.0" class="grid" />
+    <text x="56" y="244.0" text-anchor="end">Mid</text>
+    <line x1="66" x2="720" y1="81.071" y2="81.071" class="grid" />
+    <text x="56" y="85.071" text-anchor="end">High</text>
+    <text x="393.0" y="514" text-anchor="middle">Creativity</text>
+    <text x="16" y="240.0" transform="rotate(-90 16 240.0)" text-anchor="middle">Grounding</text>
+    <g data-role="Synthesist">
+      <circle cx="647.464" cy="139.345" r="28" class="tier3" opacity="0.9" />
+      <text x="647.464" y="185.345" text-anchor="middle" class="name">Synthesist</text>
+      <text x="647.464" y="201.345" text-anchor="middle">Frontier; local 4–32B</text>
+    </g>
+    <g data-role="Critic Panel">
+      <circle cx="503.268" cy="81.071" r="21" class="tier2" opacity="0.9" />
+      <text x="503.268" y="120.071" text-anchor="middle" class="name">Critic Panel</text>
+      <text x="503.268" y="136.071" text-anchor="middle">32B + strong reviewer</text>
+    </g>
+    <g data-role="Evidence Reviewer">
+      <circle cx="147.018" cy="197.619" r="21" class="tier2" opacity="0.9" />
+      <text x="147.018" y="236.619" text-anchor="middle" class="name">Evidence Reviewer</text>
+      <text x="147.018" y="252.619" text-anchor="middle">14–32B</text>
+    </g>
+    <g data-role="Extraction">
+      <circle cx="240.321" cy="261.19" r="14" class="tier1" opacity="0.9" />
+      <text x="240.321" y="293.19" text-anchor="middle" class="name">Extraction</text>
+      <text x="240.321" y="309.19" text-anchor="middle">7–9B</text>
+    </g>
+    <g data-role="Experiment Designer">
+      <circle cx="376.036" cy="340.655" r="21" class="tier2" opacity="0.9" />
+      <text x="376.036" y="379.655" text-anchor="middle" class="name">Experiment Designer</text>
+      <text x="376.036" y="395.655" text-anchor="middle">32B start</text>
+    </g>
+    <g data-role="Experiment Validator">
+      <circle cx="138.536" cy="298.274" r="21" class="tier2" opacity="0.9" />
+      <text x="138.536" y="337.274" text-anchor="middle" class="name">Experiment Validator</text>
+      <text x="138.536" y="353.274" text-anchor="middle">8–32B</text>
+    </g>
+    <g data-role="Elaborator">
+      <circle cx="189.429" cy="398.929" r="14" class="tier1" opacity="0.9" />
+      <text x="189.429" y="430.929" text-anchor="middle" class="name">Elaborator</text>
+      <text x="189.429" y="446.929" text-anchor="middle">≈7B</text>
+    </g>
+  </g>
+  <circle cx="23" cy="600" r="7" class="tier1" opacity="0.9" />
+  <text x="38" y="595" class="name">Personal computer</text>
+  <text x="38" y="612" class="muted">CPU / optional GPU</text>
+  <circle cx="238" cy="600" r="10.5" class="tier2" opacity="0.9" />
+  <text x="256.5" y="595" class="name">GPU workstation</text>
+  <text x="256.5" y="612" class="muted">One machine · local inference</text>
+  <circle cx="493" cy="600" r="14" class="tier3" opacity="0.9" />
+  <text x="515" y="595" class="name">Hosted frontier service</text>
+  <text x="515" y="612" class="muted">Provider data centre · API</text>
+  <text x="16" y="637" class="muted">September 2026 estimates · B = billion parameters · Categories are illustrative; task-specific validation required.</text>
+</svg>

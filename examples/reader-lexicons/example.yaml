@@ -1,0 +1,14 @@
+home_field: applied machine learning
+familiar_terms:
+  - term: structured pruning
+    gloss: removing groups of model parameters according to a fixed structure
+  - term: ablation study
+    gloss: comparing a system with and without one component or intervention
+analogy_domains:
+  - experimental design
+papers:
+  - title: Example background paper
+    year: 2024
+    venue: Example Conference
+source: neutral public example
+generated: "2026-08-30"

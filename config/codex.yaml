@@ -1,0 +1,99 @@
+# Codex coding-agent configuration.
+#
+# The two agents below handle workflow LLM calls; codex_web is a
+# separate retrieval-only Codex process with native live web search.
+# No model API key is needed for this configuration.
+
+agents:
+  builder:
+    temperature: 0.1
+    model:
+      provider: codex-cli                       # optional, default as openrouter; must not be null
+      model_id: gpt-5.6-sol
+      api_key_env: null                         # optional, default as null
+      base_url: null                            # optional, default as null
+      timeout_seconds: 600                      # optional, default as 600
+      reasoning_effort: high                    # optional, default as high
+
+  skeptical_verifier:
+    temperature: 0.0
+    model:
+      provider: codex-cli                       # optional, default as openrouter; must not be null
+      model_id: gpt-5.6-sol
+      api_key_env: null                         # optional, default as null
+      base_url: null                            # optional, default as null
+      timeout_seconds: 600                      # optional, default as 600
+      reasoning_effort: high                    # optional, default as high
+
+retrieval:                                      # optional, default as RetrievalConfig()
+  enabled: true                                 # optional, default as true
+  mode: source_only                             # optional, default as source_only
+  profile: default                              # optional, default as default
+  sources:                                      # optional, default as [arxiv]
+    - codex_web
+  optional_sources: []                          # optional, default as [exa]
+  final_top_k: 100                              # optional, default as 8
+  per_source_top_k: 25                          # optional, default as 3
+  fake_mode: false                              # optional, default as false
+  cache_replay: true                            # optional, default as true
+  ranking:                                      # optional, default as RetrievalRankingConfig()
+    policy: trust_tier_then_source_rank         # optional, default as trust_tier_then_source_rank
+    source_order:                               # optional, default as [arxiv, exa, codex_web]
+      - codex_web
+    trust_tier_priority:                        # optional, default as the built-in trust-tier priority map
+      subagent_web_research: 55
+  tool_budget:                                  # optional, default as RetrievalToolBudgetConfig()
+    max_calls_per_run: 12                       # optional, default as 24
+    max_calls_per_agent_round: 2                # optional, default as null
+    timeout_seconds: 30                         # optional, default as 30
+  artifacts:                                    # optional, default as RetrievalArtifactConfig()
+    enabled: true                               # optional, default as true
+    write_json: true                            # optional, default as true
+    write_html: true                            # optional, default as true
+  resilience:                                   # optional, default as ResilienceConfig()
+    enabled: true                               # optional, default as true
+    default:                                    # optional, default as ResiliencePolicyConfig()
+      enabled: true                             # optional, default as true
+      max_attempts: 3                           # optional, default as 3
+      backoff_base_seconds: 0.5                 # optional, default as 0.5
+      backoff_max_seconds: 8.0                  # optional, default as 8.0
+      circuit_failure_threshold: 5              # optional, default as 5
+      circuit_reset_seconds: 60.0               # optional, default as 60.0
+    per_source:                                 # optional, default as one-attempt policies for apify, codex_web, and claude_web
+      codex_web:                                # optional, default as a one-attempt ResiliencePolicyConfig()
+        enabled: true                           # optional, default as true
+        max_attempts: 1                         # optional, default as 3 in an explicit policy; built-in web policy defaults to 1
+        backoff_base_seconds: 0.5               # optional, default as 0.5
+        backoff_max_seconds: 8.0                # optional, default as 8.0
+        circuit_failure_threshold: 5            # optional, default as 5
+        circuit_reset_seconds: 60.0             # optional, default as 60.0
+  fulltext:                                     # optional, default as RetrievalFullTextConfig()
+    enabled: true                               # optional, default as true
+    timeout_seconds: 15.0                       # optional, default as 15.0
+    max_bytes: 20000000                         # optional, default as 20000000
+    max_pages: 40                               # optional, default as 40
+  coherence:                                    # optional, default as CoherenceConfig()
+    enabled: true                               # optional, default as true
+    embedding_enabled: true                     # optional, default as true
+    embedding_model: allenai/specter2_base      # optional, default as allenai/specter2_base
+    embedding_weight: 0.6                       # optional, default as 0.6
+    citation_enabled: true                      # optional, default as true
+    citation_weight: 0.4                        # optional, default as 0.4
+    judge_enabled: false                        # optional, default as false
+    judge_top_k: 5                              # optional, default as 5
+    judge_model: null                           # optional, default as null
+  source_limits:
+    codex_web:
+      model_id: gpt-5.5
+      reasoning_effort: high                    # optional, default as high
+      timeout_seconds: 600.0                    # optional, default as 600.0
+      query_max_chars: 2000                     # optional, default as 2000
+      max_records: 8                            # optional, default as 8
+      max_calls_per_run: 8                      # optional, default as 8
+      max_excerpt_chars: 4000                   # optional, default as 4000
+      web_search_mode: live                     # optional, default as live
+      context_size: high                        # optional, default as high
+      allowed_domains: null                     # optional, default as null
+      require_web_search_event: true            # optional, default as true
+  trust_policy:                                 # optional, default as the built-in source-to-trust-tier map
+    codex_web: subagent_web_research

@@ -1,0 +1,233 @@
+# This config runs the default execution mode: Claude Code CLI subagents
+# (`provider: claude-cli`). They authenticate from your saved `claude` login and
+# take no API key, so `api_key_env` and `base_url` are null and `max_tokens` is
+# omitted — the CLI exposes no per-call token cap and a run with one is rejected.
+# Host-side retrieval is unaffected and still runs.
+#
+# `model_id` is a model your saved login can use (what you would pass to
+# `claude --model`), NOT an OpenRouter slug. Set `codex-cli` instead to use Codex.
+#
+# To use OpenRouter for direct LLM calls instead, set every role to:
+#   provider: openrouter
+#   model_id: <a slug from https://openrouter.ai/models>
+#   api_key_env: OPENROUTER_API_KEY
+#   base_url: https://openrouter.ai/api/v1
+#   max_tokens: 16384        # openrouter accepts a per-call cap
+# and export OPENROUTER_API_KEY.
+#
+# Every role takes the same shape as `builder` below, which is annotated with each
+# available key. The two roles here are required; other pipeline roles fall back to
+# a tier default (generative -> builder, critical -> skeptical_verifier) unless given
+# their own block. Set a DIFFERENT model_id per role where independence matters: the
+# Critic Panel draws its judges from the builder, critic_panel and skeptical_verifier
+# backends, so pointing those at one model removes the cross-vendor check.
+
+agents:
+
+  # Generative tier default. The Extraction Agent, Research Synthesist and Experiment
+  # Designer inherit this block unless they are given one of their own.
+  builder:
+    temperature: 0.1              # 0.0 - 2.0
+    model:
+      provider: claude-cli        # claude-cli | codex-cli | openrouter
+      model_id: <MODEL_ID>        # a model the saved `claude` login can use
+      api_key_env: null           # must be null for claude-cli / codex-cli
+      base_url: null              # must be null for claude-cli / codex-cli
+      # max_tokens:               # omit for claude-cli / codex-cli
+      timeout_seconds: 600        # CLI subagent calls are slow; 600 is the backend default
+      reasoning_effort: high      # claude-cli: low|medium|high|xhigh|max
+                                  # codex-cli:  minimal|low|medium|high|xhigh
+                                  # ignored by openrouter
+
+  # Critical tier default. The Evidence Reviewer, Critic Panel and Experiment Validator
+  # inherit this block unless they are given one of their own.
+  skeptical_verifier:
+    temperature: 0.0
+    model:
+      provider: claude-cli
+      model_id: <MODEL_ID>
+      api_key_env: null
+      base_url: null
+      timeout_seconds: 600
+      reasoning_effort: high
+
+retrieval:
+  enabled: true
+  mode: source_only
+  profile: default
+  sources:
+    # arXiv full-PDF loading is opt-in because its aggregate loader call has no
+    # reliable host-side timeout. Use a bounded metadata source by default.
+    - crossref
+  optional_sources:
+    - exa
+    - openalex
+  final_top_k: 100
+  per_source_top_k: 25
+  fake_mode: false
+  cache_replay: true
+  ranking:
+    policy: trust_tier_then_source_rank
+    source_order:
+      - arxiv
+      - europepmc
+      - openalex
+      - crossref
+      - exa
+      - codex_web
+      - claude_web
+    trust_tier_priority:
+      authoritative_preprint: 100
+      peer_reviewed_oa: 90
+      indexed_metadata: 80
+      web_research_paper: 60
+      subagent_web_research: 55
+      deterministic_test: 100
+  tool_budget:
+    max_calls_per_run: 12
+    max_calls_per_agent_round: 2
+    timeout_seconds: 30
+  artifacts:
+    enabled: true
+    write_json: true
+    write_html: true
+  resilience:
+    enabled: true
+    default:
+      enabled: true
+      max_attempts: 3
+      backoff_base_seconds: 0.5
+      backoff_max_seconds: 8.0
+      circuit_failure_threshold: 5
+      circuit_reset_seconds: 60.0
+    per_source:
+      # One live-web subprocess attempt only; retries would multiply account usage.
+      codex_web:
+        enabled: true
+        max_attempts: 1
+        backoff_base_seconds: 0.5
+        backoff_max_seconds: 8.0
+        circuit_failure_threshold: 5
+        circuit_reset_seconds: 60.0
+      claude_web:
+        enabled: true
+        max_attempts: 1
+        backoff_base_seconds: 0.5
+        backoff_max_seconds: 8.0
+        circuit_failure_threshold: 5
+        circuit_reset_seconds: 60.0
+  fulltext:
+    enabled: true
+    timeout_seconds: 15.0
+    max_bytes: 20000000
+    max_pages: 40
+  coherence:
+    enabled: true
+    embedding_enabled: true
+    # The `_base` variant is directly loadable. The bare adapter identifier needs
+    # the optional PEFT package and otherwise silently falls back to lexical scoring.
+    embedding_model: allenai/specter2_base
+    embedding_weight: 0.6
+    citation_enabled: true
+    citation_weight: 0.4
+    judge_enabled: false
+    judge_top_k: 5
+    judge_model: null
+  source_limits:
+    arxiv:
+      min_delay_seconds: 3
+      single_connection: true
+      query_max_chars: 300
+      mode: full_pdf
+      doc_content_chars_max: 4000
+      load_max_docs: 100
+      load_all_available_meta: true
+      continue_on_failure: true
+    exa:
+      require_api_key_env: EXA_API_KEY
+      search_type: auto
+      category: research paper
+      text: true
+      highlights: true
+      highlight_query: null
+      highlight_max_characters: 1200
+      text_max_characters: 20000
+      max_age_hours: null
+      livecrawl_timeout: null
+      include_html_tags: false
+      include_domains: null
+      exclude_domains: null
+      include_text: null
+      exclude_text: null
+      max_qps: 10
+      max_cost_dollars_per_run: 0.25
+      max_cost_dollars_per_call: 0.05
+    crossref:
+      base_url: https://api.crossref.org/works
+      mailto: null
+      query_max_chars: 300
+      timeout_seconds: 10.0
+      select: null
+    openalex:
+      base_url: https://api.openalex.org/works
+      mailto: null
+      require_api_key_env: OPENALEX_API_KEY
+      require_api_key: false
+      key_source: env
+      query_max_chars: 300
+      timeout_seconds: 10.0
+      select: null
+    europepmc:
+      base_url: https://www.ebi.ac.uk/europepmc/webservices/rest/search
+      fulltext_base_url: https://www.ebi.ac.uk/europepmc/webservices/rest
+      result_type: core
+      query_max_chars: 300
+      timeout_seconds: 10.0
+    # The Apify source is not selectable from configuration: `apify` is rejected by
+    # `RetrievalConfig.validate_sources` in src/config.py, so adding it to `sources`
+    # or `optional_sources` fails config load. This block is reserved for a future
+    # release; setting `actor_id` alone does not enable it.
+    apify:
+      actor_id: ""
+      query_field: query
+      max_items: 15
+      timeout_seconds: 60.0
+    # Opt-in: set model_id and add `codex_web` to sources/optional_sources.
+    codex_web:
+      model_id: null
+      reasoning_effort: high
+      timeout_seconds: 900.0
+      query_max_chars: 2000
+      max_records: 8
+      # Durable Codex subprocess-attempt cap per run_id (not searches within a turn).
+      max_calls_per_run: 8
+      max_excerpt_chars: 4000
+      web_search_mode: live
+      context_size: high
+      allowed_domains: null
+      require_web_search_event: true
+    # Opt-in: set model_id and add `claude_web` to sources/optional_sources.
+    claude_web:
+      model_id: null
+      reasoning_effort: high
+      timeout_seconds: 600.0
+      query_max_chars: 2000
+      max_records: 8
+      # Durable Claude subprocess-attempt cap per run_id (not searches within a turn).
+      max_calls_per_run: 8
+      max_excerpt_chars: 4000
+      # The exhaustive built-in tool surface handed to `claude --tools`.
+      web_tools: [WebFetch, WebSearch]
+      permission_mode: bypassPermissions
+      allowed_domains: null
+      require_web_search_event: true
+  trust_policy:
+    arxiv: authoritative_preprint
+    crossref: indexed_metadata
+    openalex: indexed_metadata
+    europepmc: peer_reviewed_oa
+    exa: web_research_paper
+    apify: web_research_paper
+    codex_web: subagent_web_research
+    claude_web: subagent_web_research
+    fake: deterministic_test

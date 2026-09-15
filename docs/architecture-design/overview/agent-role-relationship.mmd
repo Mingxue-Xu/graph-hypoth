@@ -1,0 +1,65 @@
+flowchart LR
+  %% The seven workflow roles, numbered in pipeline order, and the model each one
+  %% runs on under the default configuration (config/*.yaml define only the two
+  %% base blocks `builder` and `skeptical_verifier`; no per-role block is set).
+  %% The two blocks are configuration, not agents: nothing runs as "builder" or
+  %% "skeptical_verifier". The Critic Panel is a panel of three judge seats, not
+  %% one agent; seat 3 runs only when seats 1 and 2 disagree.
+  %% Source of truth: src/config.py (`AgentsConfig.for_role`) and
+  %% src/graph_state_runtime.py (`judge_roles`).
+
+  subgraph CONFIGS["BASE MODEL CONFIGS · the only blocks set by default"]
+    direction TB
+    builder["builder<br/><i>generative default · temperature 0.1</i>"]
+    verifier["skeptical_verifier<br/><i>critical default · temperature 0.0</i>"]
+  end
+
+  subgraph GENERATIVE["GENERATIVE TIER · roles that write"]
+    direction TB
+    extraction["1 · Extraction Agent"]
+    synthesist["3 · Research Synthesist"]
+    designer["5 · Experiment Designer"]
+    elaborator["7 · Narrative Elaborator"]
+  end
+
+  subgraph CRITICAL["CRITICAL TIER · roles that judge"]
+    direction TB
+    reviewer["2 · Evidence Reviewer"]
+    subgraph PANEL["4 · Critic Panel · three judge seats"]
+      direction TB
+      seat1["Seat 1 · always runs"]
+      seat2["Seat 2 · always runs"]
+      seat3["Seat 3 · tie-breaker<br/>runs only if seats 1 and 2 disagree"]
+    end
+    validator["6 · Experiment Validator"]
+  end
+
+  builder --> extraction
+  builder --> synthesist
+  builder --> designer
+  builder --> elaborator
+  builder --> seat1
+
+  verifier --> reviewer
+  verifier --> seat2
+  verifier --> seat3
+  verifier --> validator
+
+  %% Invisible links only fix the vertical order of the critical column (2, 4, 6).
+  reviewer ~~~ seat1
+  seat3 ~~~ validator
+
+  classDef baseConfig fill:#e1f5ee,stroke:#0f6e56,stroke-width:3px,color:#04342c;
+  classDef generativeRole fill:#eaf3de,stroke:#639922,stroke-width:1px,color:#173404;
+  classDef criticalRole fill:#eeedfe,stroke:#534ab7,stroke-width:1px,color:#26215c;
+  classDef judgeSeat fill:#f5f4ff,stroke:#534ab7,stroke-width:1px,stroke-dasharray:3 2,color:#26215c;
+
+  class builder,verifier baseConfig;
+  class extraction,synthesist,designer,elaborator generativeRole;
+  class reviewer,validator criticalRole;
+  class seat1,seat2,seat3 judgeSeat;
+
+  style CONFIGS fill:#f8fafc,stroke:#94a3b8,stroke-width:1px,color:#475569
+  style GENERATIVE fill:#fbfdf7,stroke:#97c459,stroke-width:1px,color:#3b6d11
+  style CRITICAL fill:#fbfaff,stroke:#afa9ec,stroke-width:1px,color:#3c3489
+  style PANEL fill:#eeedfe,stroke:#534ab7,stroke-width:2px,color:#26215c

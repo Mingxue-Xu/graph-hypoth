@@ -1,0 +1,74 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "graph-hypoth-orchestration"
+version = "0.1.0"
+description = "Graph-based research hypothesis synthesis and evidence evaluation pipeline"
+requires-python = ">=3.11"
+dependencies = [
+  "camel-ai==0.2.90",
+  # CAMEL 0.2.90 imports FastMCP from the pre-2.0 MCP server surface.
+  "mcp>=1.3,<2",
+  "openai>=1,<2",
+  "pydantic>=2.7,<3",
+  "PyYAML>=6,<7",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<9", "ruff>=0.8,<1", "mypy>=1.13,<2"]
+retrieval = [
+  "langchain-community>=0.3,<0.4",
+  "arxiv>=2,<3",
+  "pymupdf>=1.24,<2",
+  "exa-py>=2.12,<3",
+]
+retrieval-coherence = ["sentence-transformers>=3,<4"]
+all = [
+  "pytest>=8,<9",
+  "ruff>=0.8,<1",
+  "mypy>=1.13,<2",
+  "langchain-community>=0.3,<0.4",
+  "arxiv>=2,<3",
+  "pymupdf>=1.24,<2",
+  "exa-py>=2.12,<3",
+  "sentence-transformers>=3,<4",
+]
+
+[project.scripts]
+graph-hypoth-orchestrate = "src.cli:main"
+graph-hypoth-synthesist = "src.synthesist_run:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q"
+markers = [
+  "smoke: fast deterministic runtime smoke tests",
+  "e2e: deterministic end-to-end tests across graph-state pipelines, CLI, and logs",
+  "live: opt-in CAMEL/LLM tests that require external credentials",
+  "live_openalex: opt-in live OpenAlex API tests (polite pool; OPENALEX_API_KEY optional)",
+  "live_apify: opt-in live Apify actor tests (needs APIFY_API_TOKEN + a configured actor_id)",
+  "live_llm_provider: opt-in live LLM provider swap contract tests",
+  "live_openrouter: live OpenRouter/CAMEL provider test",
+  "live_openai_compatible: live OpenAI-wire-compatible endpoint (self-hosted or proxy) test",
+]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+# Scoped to the retrieval package: enforces the PaperSource Protocol at the
+# service/resilience seams without demanding a full-repo typing cleanup.
+[tool.mypy]
+python_version = "3.11"
+files = ["src/retrieval"]
+mypy_path = "."
+ignore_missing_imports = true
+follow_imports = "silent"
+plugins = ["pydantic.mypy"]

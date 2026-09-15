@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Claim Graph — The Complete Pipeline</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.11.0/dist/mermaid.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&amp;family=DM+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; color: #1a1a1a; background: #f5f6f8; }
+  header { background: #0d1b2a; color: #fff; padding: 22px 28px; }
+  header h1 { margin: 0 0 6px; font-size: 22px; }
+  header p { margin: 0; color: #b8c4d0; font-size: 14px; max-width: 1180px; }
+  main { padding: 20px 28px 60px; max-width: 1560px; margin: 0 auto; }
+  section { background: #fff; border: 1px solid #e0e4e8; border-radius: 10px; padding: 18px 20px; margin: 22px 0; box-shadow: 0 1px 3px rgba(0,0,0,.05); overflow-x: auto; }
+  h2 { font-size: 18px; margin: 0 0 10px; }
+  .sub { color: #5a6672; font-size: 13px; margin: 0 0 14px; max-width: 1220px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; margin: 6px 0 0; font-size: 13px; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .edgekey { display:inline-block; width:26px; vertical-align:middle; }
+  .mermaid { overflow-x: auto; margin-top: 8px; text-align: center; }
+  .mermaid svg { display: block; max-width: 100%; height: auto; margin: 0 auto; }
+  code { background: #eef1f4; padding: 1px 5px; border-radius: 4px; font-size: 12.5px; }
+  .note { font-size: 12.5px; color: #5a6672; border-left: 3px solid #cfd6dd; padding: 4px 0 4px 12px; margin: 14px 0 0; }
+  /* §2 "plain words" — DM Sans / DM Mono design system, scoped to that section only */
+  #sec2 h2, #sec2 .sub, #sec2 .note, #sec2 .legend,
+  #sec2 .cluster-label, #sec2 .nodeLabel {
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  #sec2 .nodeLabel { font-weight: 600; font-size: 13.5px; }
+  #sec2 code, #sec2 .edgeLabel {
+    font-family: 'DM Mono', ui-monospace, SFMono-Regular, Menlo, monospace; }
+  #sec2 .edgeLabel { font-size: 12px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Claim Graph — The Complete Pipeline</h1>
+  <p>A multi-agent pipeline comprising seven specialized agent roles, together with deterministic
+  procedures and validation gates, that constructs a claim graph from a researcher's seed claim
+  or research goal. One role — the Critic Panel — is instantiated by two independent critic agents plus
+  a conditionally consulted third judge. Section 1 gives the complete pipeline; section 2 shows the
+  same pipeline simplified, in plain words.</p>
+</header>
+<main>
+
+  <section>
+    <h2>1 · The complete pipeline</h2>
+    <p class="sub">The pipeline comprises seven specialized agent roles together with deterministic procedures and
+    validation gates, in runtime order: <b>extraction → evidence verification (every edge with retrieved
+    evidence) → priority annotation → concept mining → hypothesis proposal ⟷ Critic Panel → panel
+    aggregation → revision → panel → aggregation → acceptance gate and ranking → researcher confirmation →
+    experiment design ⟷ experiment review → export</b>.</p>
+    <p class="sub">The claim graph is versioned: each accepted transaction produces a new graph revision. Hypothesis
+    generation follows a generate–critique–revise loop: propose → panel → revise → panel — two panel rounds
+    and one revision round; the panel's two critic agents act as the judges, and a third judge is consulted
+    only when the two judges disagree.</p>
+    <p class="sub"><b>Evidence verification is exhaustive and up-front</b>: every accepted edge with retrieved
+    evidence passages is verified before hypothesis generation begins, rather than on demand; hypothesis edges
+    are not verified at this stage (they carry no retrieved evidence passages — their grounding is deferred to
+    the experiment stage). In evidence aggregation, per-passage signals — together with the open risks and
+    qualifiers the reviewer flags across the passages — are fused deterministically into a single edge-level
+    verdict; a verdict is accepted only when its confidence clears a 0.5 threshold, otherwise the edge is
+    recorded as insufficient; the two best verdicts within δ = 0.025 of each other count as a tie and also
+    yield insufficient; and a verdict whose evidence links lack a required evidence role is withheld from
+    commit and recorded as an open risk, leaving the edge unverified. With the shipped configuration only the
+    support role is scheduled, so an edge commits as supported or insufficient.</p>
+    <p class="sub">Each candidate hypothesis must pass a hypothesis acceptance gate — minimum bars on novelty,
+    testability, scope fit, and duplication, applied before ranking; its quality score is computed
+    deterministically from the proposer's self-reported signals and the panel's median novelty grade, and its
+    ranking score is the quality score discounted by the panel's median saturation (quality × (1 − saturation));
+    the top-k ranked candidates are presented to the researcher or resolved by the profile's confirmation
+    policy.</p>
+    <p class="note"><b>Terminology.</b><br><b>Claim graph</b>: a directed graph in which nodes represent
+    concepts and each directed edge records a relationship that a source asserts from source to target;
+    edges carry their evidence links and, once verified, a status and confidence. Its form is borrowed from
+    causal graphs, its semantics are not: an edge records what a source asserts, not what an intervention
+    would show.<br><b>Agent</b>: a large language model (LLM) instance assigned a
+    specialized role in the pipeline and invoked with a fixed role prompt; only LLM roles are agents —
+    transaction validation, scoring, aggregation, and export are deterministic procedures.<br><b>Graph
+    transaction (Δ)</b>: a typed bundle of proposed graph changes (Δ-extract, Δ-verify, Δ-priority,
+    Δ-hypothesis, Δ-experiment) that must pass five deterministic acceptance checks — well-formedness of the
+    payload, referential integrity, currency of the base revision, legality of the status transition, and
+    idempotence — before the graph is
+    updated; each accepted transaction produces a new graph revision. Δ-extract covers both seed-derived and
+    literature-mined additions; the latter appears in the diagram as Δ-extract (mined).<br><b>Verdict</b>: the edge-level outcome the
+    deterministic fusion selects — support, contradict, qualify, not causal, or insufficient — which becomes
+    the edge status <code>supported</code>, <code>contradicted</code>, <code>qualified</code>,
+    <code>not_causal</code>, or <code>insufficient</code> when committed.
+    <br><b>Evidence role</b>: the functional part an evidence passage plays for the edge under verification —
+    support, contradiction, qualification, mechanism, or confounder; each verdict requires a matching role
+    among the edge's evidence links, and the missing-role guard withholds a proposal whose links lack it,
+    recording an open risk instead.<br><b>Mechanism chain</b>: the ordered sequence of steps through which a
+    hypothesis links its source concept to its target; candidate hypotheses state their chain explicitly and
+    the panel grades each step.<br><b>Confounder</b>: a concept that influences both the source and the target
+    of an edge without lying on the mechanism chain between them.<br><b>Mediator</b>: a concept that lies on
+    that chain. Both are node types the experiment stage reads as controls.<br><b>Saturation</b>: a penalty in [0, 1] reflecting how densely the retrieved literature already covers a
+    candidate hypothesis's territory.<br><b>Borda rank fusion</b>: rank aggregation by summing rank positions
+    across judges.<br><b>Top-k</b>: the k highest-ranked candidates presented to the researcher.</p>
+    <p class="note"><b>Input scoping:</b> the seed from which the pipeline extracts is either a <b>claim or a
+    research goal</b> — both are accepted as the seed input, and the pipeline does not branch on
+    which it is. The seed arrives as part of a <b>researcher profile</b> — a structured input containing the
+    seed claim or research goal together with a description of the researcher's expertise. Concepts are
+    tagged by origin as seed-derived or literature-mined.</p>
+    <div class="mermaid">
+flowchart TB
+ subgraph LU["Researcher"]
+ direction TB
+ st((" start ")):::startc
+ useed("Seed claim / research goal
+researcher profile: seed + expertise"):::user
+ uprio("Priority annotation
+converted to priority weights"):::user
+ uconf{"Confirm hypotheses?
+researcher or profile policy"}:::user
+ end
+ subgraph LA["Agents — seven specialized LLM roles"]
+ direction TB
+ a1("Extraction Agent
+generative role
+concept nodes + directed relationships"):::extraction
+ a2("Evidence Reviewer
+critical role
+up-front: every edge with retrieved evidence"):::evidence
+ subgraph LT["Research Synthesist — one persistent thread · generative role"]
+ direction TB
+ t1("turn 1 · concept mining
+literature-mined concepts + source context"):::synthesist
+ t2("turn 2 · propose
+candidate hypotheses · mechanism chains
++ quoted spans · passages in context"):::synthesist
+ t3("turn 3 · revise
+repair flagged chain steps and terms
++ derive new candidates"):::synthesist
+ end
+ a4("Critic Panel — two independent critic agents
+builder + critic_panel backends · skeptical_verifier as third judge
+joint pool grading · grounded · single pass"):::critic
+ a6("Experiment Designer
+generative role
+one plan per confirmed hypothesis"):::experimentDesigner
+ a7("Experiment Validator
+critical role
+five criteria · one revision pass"):::experimentValidator
+ a5("Narrative Elaborator — optional
+generative role · renders summaries from plan"):::elaborator
+ end
+ subgraph LC["Deterministic procedures"]
+ direction TB
+ cret("Literature retrieval + query log
+arXiv · Crossref · OpenAlex · Europe PMC · web search (Exa)"):::det
+ cfuse("Evidence aggregation → edge verdict
+deterministic fusion of per-passage signals
+confidence threshold 0.5 · near-tie δ 0.025
+missing-role guard → withheld · open risk"):::det
+ cagg("Panel aggregation
+median grades · Borda rank fusion
+third judge only on disagreement"):::det
+ cgate("Hypothesis acceptance gate + scoring
+ranking score = quality × (1 − saturation) · top-k"):::det
+ cexport("Export
+machine-readable graph (+ experiment plans)
+edge summary table · run trace report"):::det
+ end
+ subgraph LG["Deterministic transaction validation — each transaction passes five acceptance checks"]
+ direction TB
+ vext{"Δ-extract"}:::guard
+ vver{"Δ-verify"}:::guard
+ vpri{"Δ-priority"}:::guard
+ venr{"Δ-extract (mined)"}:::guard
+ vhyp{"Δ-hypothesis"}:::guard
+ vexp{"Δ-experiment"}:::guard
+ end
+ subgraph LS["Versioned claim graph + provenance log"]
+ direction TB
+ g0[("seed nodes + edges")]:::store
+ g4[("+ verdicts · up-front")]:::store
+ g1[("+ priority weights")]:::store
+ g2[("+ mined concepts")]:::store
+ g3[("+ hypotheses")]:::store
+ g5[("+ experiment plans")]:::store
+ logst[("Append-only transaction
++ model-call log (audit record)")]:::store
+ end
+ st --> useed
+ useed -->|"seed claim / goal"| a1
+ useed -->|"seed-level search"| cret
+ a1 -->|"Δ-extract"| vext
+ vext -->|"accepted"| g0
+ cret -->|"a fixed number of highest-relevance evidence passages per edge"| a2
+ a2 -->|"per-passage signals + risks"| cfuse
+ cfuse -->|"Δ-verify"| vver
+ vver -->|"accepted"| g4
+ g0 -->|"accepted edges"| uprio
+ uprio -->|"Δ-priority"| vpri
+ vpri -->|"accepted"| g1
+ cret -->|"full-text passages"| t1
+ g1 -->|"graph nodes"| t1
+ t1 -->|"Δ-extract (mined)"| venr
+ venr -->|"accepted"| g2
+ g2 -->|"graph view + source context"| t2
+ t2 -->|"candidates · chains · quoted spans"| a4
+ a4 -->|"grades · ranking · critique"| cagg
+ cagg -->|"critique + flagged steps"| t3
+ t3 -->|"revised + derived candidates"| a4
+ cagg --> cgate
+ cgate -->|"top-ranked hypotheses (top-k)"| uconf
+ uconf -->|"confirmed selection → Δ-hypothesis"| vhyp
+ vhyp -->|"accepted · unverified"| g3
+ g4 -->|"each confirmed hypothesis + confounders"| a6
+ cret -.->|"targeted methods / datasets / baselines"| a6
+ a6 -->|"experiment plan"| a7
+ a7 -.->|"flagged criteria → one revision"| a6
+ a7 -->|"validated plan → Δ-experiment"| vexp
+ vexp -->|"accepted"| g5
+ g5 --> cexport
+ cexport -.->|"optional narrative summaries · from plan"| a5
+ cexport --> en(((" end "))):::endc
+ vext -.-> logst
+ vver -.-> logst
+ venr -.-> logst
+ vhyp -.-> logst
+ vexp -.-> logst
+ classDef user fill:#c8e6c9,stroke:#2e7d32,color:#1b5e20;
+ classDef extraction fill:#bbdefb,stroke:#1565c0,color:#0d2742,stroke-width:2px;
+ classDef evidence fill:#c8e6c9,stroke:#2e7d32,color:#173d1c,stroke-width:2px;
+ classDef synthesist fill:#ffe0b2,stroke:#ef6c00,color:#5d2b00,stroke-width:2px;
+ classDef critic fill:#b2dfdb,stroke:#4db6ac,color:#174a46,stroke-width:2px;
+ classDef experimentDesigner fill:#f8bbd0,stroke:#c2185b,color:#4a0d28,stroke-width:2px;
+ classDef experimentValidator fill:#f8bbd0,stroke:#c2185b,color:#4a0d28,stroke-width:2px;
+ classDef elaborator fill:#e1bee7,stroke:#6a1b9a,color:#311b34,stroke-dasharray:5 3;
+ classDef det fill:#eceff1,stroke:#455a64,color:#263238;
+ classDef guard fill:#d1c4e9,stroke:#512da8,color:#24123d;
+ classDef store fill:#fff8e1,stroke:#f9a825,color:#5f4339;
+ classDef startc fill:#263238,stroke:#000,color:#fff;
+ classDef endc fill:#263238,stroke:#000,color:#fff;
+ style LU fill:#e8f5e9,stroke:#2e7d32,stroke-dasharray:6 4;
+ style LA fill:#e3f2fd,stroke:#1565c0,stroke-dasharray:6 4;
+ style LT fill:#fff3e0,stroke:#ef6c00,stroke-dasharray:6 4;
+ style LC fill:#fafafa,stroke:#78909c,stroke-dasharray:6 4;
+ style LG fill:#ede7f6,stroke:#512da8,stroke-dasharray:6 4;
+ style LS fill:#fffde7,stroke:#f9a825,stroke-dasharray:6 4;
+    </div>
+    <p class="note"><b>Two structural notes:</b> (1) the <b>Research Synthesist runs as a single
+    persistent conversational thread</b> — concept mining → proposal → revision — with the retrieved
+    full-text passages in context throughout; (2) the <b>Critic Panel acts as an automated peer-review
+    step</b>: two independent critic agents (the judges of the aggregation step), backed by distinct role
+    backends (distinct providers when so configured), grade the entire candidate pool jointly in a single
+    pass (rather than by pairwise tournament), with all judgments grounded in the candidates' cited passages;
+    grades, mechanism-step and terminology audits, pool ranking, and the critique are produced in one
+    single-pass call per judge, and a third judge is consulted only when the two judges disagree. Solid arrows denote control and object flow;
+    dashed arrows denote audit records and optional paths.</p>
+    <p class="note"><b>Experiment design:</b> after confirmation, each committed hypothesis passes
+    to a two-role stage — the <b>Experiment Designer</b> expands the proposal's one-line experiment
+    sketch into a full, retrieval-grounded plan (design · operationalization · baselines, datasets, and
+    metrics · controls drawn from the graph's confounder and mediator nodes · expected versus falsifying
+    outcomes) — the targeted retrieval that grounds the plan (methods, datasets, baselines) is an optional
+    input to this stage — and the independent <b>Experiment Validator</b>, an automated reviewer, grades the plan on
+    five criteria (clarity, validity, robustness, feasibility, reproducibility), driving a single revision
+    pass. The validated plan is accepted into the graph as a structured <b>Δ-experiment</b> bound to its
+    hypothesis (producing a new graph revision) and exported; the optional Narrative Elaborator writes
+    reader-facing prose for each surfaced hypothesis at render time, including its committed plan when one
+    exists. This stage requires no further researcher interaction.</p>
+  </section>
+
+  <section id="sec2">
+    <h2>2 · The same pipeline, in plain words</h2>
+    <p class="sub"><b>Read it top-to-bottom.</b> The same stages and arrows as section 1, with every label in
+    plain language, and one drawing difference: the Critic Panel — the only step that really runs several
+    agents at once — is drawn here as its individual judges instead of one box.</p>
+    <p class="sub">You bring a claim or research goal, your expertise, and your topic priorities.</p>
+    <p class="sub"><b>① Map your claim</b> — the Extraction Agent turns the claim into a small graph of concepts
+    joined by directed links, each recording a relationship a source asserts.</p>
+    <p class="sub"><b>② Propose ⟷ critique</b> — the Research Synthesist reads that graph together with full-text
+    passages from the retrieved papers and drafts hypotheses; two independent critic agents each grade and
+    rank them (a third judge joins only when the two disagree); the Research Synthesist revises against the
+    critique. The best few are then shown to you, and no hypothesis is saved until you, or the confirmation
+    policy in your profile, confirm it.</p>
+    <p class="sub"><b>③ Check the evidence</b> — the Evidence Reviewer reads every short-listed passage behind
+    each link, and a fixed rule — not the reviewer — turns those readings into the verdict.</p>
+    <p class="sub"><b>④ Design the experiments</b> — for every hypothesis you confirmed, the Experiment Designer
+    writes a full test plan and the independent Experiment Validator grades it, with one round of revision.</p>
+    <p class="sub">In the middle sits the <b>claim graph</b>, the one shared record: every result is saved into it,
+    every stage after ① reads from it, and at the end it hands you your hypotheses with their experiment plans.</p>
+    <div class="mermaid">
+flowchart TB
+ subgraph IN["Your inputs"]
+ direction LR
+ claim["Your claim or
+research goal"]:::user
+ expert["Your expertise +
+interests"]:::user
+ prio["Your topic priorities"]:::user
+ end
+ subgraph SB["① Map your claim"]
+ ex(["Extraction Agent
+turns your claim into concepts
+joined by directed links"]):::extraction
+ end
+ subgraph SV["③ Check the evidence"]
+ er(["Evidence Reviewer
+reads every short-listed passage
+behind a link, all in one sitting"]):::evidence
+ vd["a fixed rule turns those readings
+into the verdict — the agent
+never decides"]:::det
+ end
+ subgraph SX["② Propose ⟷ critique"]
+ th(["Research Synthesist
+one ongoing conversation:
+mine ideas → propose → revise,
+the source papers always in hand"]):::synthesist
+ subgraph PAN["Critic Panel"]
+ direction LR
+ j1(["Critic agent A
+grades + ranks every
+proposal on its own"]):::critic
+ j2(["Critic agent B
+grades + ranks every
+proposal on its own"]):::critic
+ j3(["Third judge
+reads the same proposals,
+joins only when A and B
+disagree"]):::critic
+ end
+ agg["fixed rules merge the grades
+into a pass gate + final ranking"]:::det
+ end
+ subgraph SE["④ Design the experiments"]
+ des(["Experiment Designer
+drafts a full test plan for each
+hypothesis you confirmed,
+grounded in the methods literature"]):::experimentDesigner
+ evl(["Experiment Validator
+grades the plan on five criteria,
+sends it back once if needed"]):::experimentValidator
+ end
+ G[("Claim graph")]:::store
+ done(((" done "))):::terminal
+ claim --> ex
+ ex -->|"adds concepts + links"| G
+ prio -->|"records what matters to you"| G
+ G -->|"reads the graph + full-text passages from the papers"| th
+ th -->|"draft hypotheses + reasoning + quotes"| j1
+ th --> j2
+ th -.->|"only when A and B disagree"| j3
+ j1 --> agg
+ j2 --> agg
+ j3 -.-> agg
+ agg -->|"critique + ranking"| th
+ agg -->|"best few shown to you → confirmed → saved"| G
+ G -->|"reads every link with short-listed evidence (in the real run this happens early, right after ①)"| er
+ er --> vd
+ vd -->|"records the verdicts"| G
+ G -->|"reads each confirmed hypothesis + its possible confounders"| des
+ des -->|"experiment plan"| evl
+ evl -.->|"problems flagged → one revision"| des
+ evl -->|"records the plan"| G
+ G -->|"your hypotheses + their experiment plans"| done
+ expert -->|"steers"| SX
+ classDef terminal fill:#2b3640,stroke:#1a232b,color:#ffffff;
+ classDef user fill:#ffffff,stroke:#7A8893,color:#37474f;
+ classDef extraction fill:#ffffff,stroke:#2E5570,color:#2E5570,stroke-width:1.6px;
+ classDef evidence fill:#ffffff,stroke:#4F6A46,color:#4F6A46,stroke-width:1.6px;
+ classDef synthesist fill:#ffffff,stroke:#B25A36,color:#B25A36,stroke-width:1.6px;
+ classDef critic fill:#ffffff,stroke:#4DB6AC,color:#2F6F69,stroke-width:1.6px;
+ classDef det fill:#eef1f3,stroke:#9aa7b0,color:#3a4750;
+ classDef store fill:#fff3c4,stroke:#d9a441,color:#6b4f2a,stroke-width:1.8px;
+ classDef experimentDesigner fill:#ffffff,stroke:#B2368C,color:#B2368C,stroke-width:1.6px;
+ classDef experimentValidator fill:#ffffff,stroke:#C2185B,color:#8A1743,stroke-width:1.6px;
+ style IN fill:#E7EAEE,stroke:#c4ccd2,stroke-width:1px
+ style SB fill:#DEE8EF,stroke:#bcd0de,stroke-width:1px
+ style SV fill:#E3EBDF,stroke:#c5d6bd,stroke-width:1px
+ style SX fill:#F4E4DA,stroke:#e3c4b2,stroke-width:1px
+ style PAN fill:#FBF2EC,stroke:#e3c4b2,stroke-width:1px
+ style SE fill:#F0DEEA,stroke:#d8b2cc,stroke-width:1px
+ linkStyle default stroke:#6E7B86,stroke-width:1.6px
+ linkStyle 3,12,15 stroke:#3E6B8C,color:#3E6B8C,stroke-width:1.6px
+ linkStyle 1,2,11,14,18,19 stroke:#6B6258,color:#6B6258,stroke-width:1.6px
+ linkStyle 20 stroke:#A8516E,color:#A8516E,stroke-width:1.6px
+    </div>
+    <div class="legend" style="margin-top:14px">
+      <span style="font-weight:600">Arrow key:</span>
+      <span><svg class="edgekey" width="32" height="12" viewBox="0 0 32 12"><line x1="0" y1="6" x2="24" y2="6" stroke="#6B6258" stroke-width="2.5"/><path d="M24 1.5 L31 6 L24 10.5 Z" fill="#6B6258"/></svg> <b>save</b> — a result is written into the claim graph (or handed onward at the end)</span>
+      <span><svg class="edgekey" width="32" height="12" viewBox="0 0 32 12"><line x1="0" y1="6" x2="24" y2="6" stroke="#3E6B8C" stroke-width="2.5"/><path d="M24 1.5 L31 6 L24 10.5 Z" fill="#3E6B8C"/></svg> <b>read</b> — a stage reads what is already in the claim graph</span>
+      <span><svg class="edgekey" width="32" height="12" viewBox="0 0 32 12"><line x1="0" y1="6" x2="24" y2="6" stroke="#A8516E" stroke-width="2.5"/><path d="M24 1.5 L31 6 L24 10.5 Z" fill="#A8516E"/></svg> <b>steers</b> — your expertise shapes what stage ② proposes</span>
+      <span><svg class="edgekey" width="32" height="12" viewBox="0 0 32 12"><line x1="0" y1="6" x2="24" y2="6" stroke="#6E7B86" stroke-width="2.5"/><path d="M24 1.5 L31 6 L24 10.5 Z" fill="#6E7B86"/></svg> <b>hand-off</b> — steps inside a stage passing work to each other (dashed = only when needed: a plan revision, or the third judge)</span>
+    </div>
+    <p class="note"><b>One timing wrinkle:</b> the stages are numbered the way this section presents them, but in
+    the running system the evidence check <b>③</b> happens early — every link with short-listed evidence is
+    verified right after <b>①</b>, before any hypotheses are drafted (the up-front verification of section 1).</p>
+  </section>
+
+</main>
+<script>
+  mermaid.initialize({ startOnLoad: false, theme: 'default', securityLevel: 'loose',
+    flowchart: { useMaxWidth: true, htmlLabels: true, nodeSpacing: 40, rankSpacing: 55 } });
+  // colour §2 stage titles to match their boxes, and paint titles on top of edges
+  var STAGE_TITLE = {
+    '① Map your claim': ['#2E5570', '#DEE8EF'],
+    '③ Check the evidence': ['#4F6A46', '#E3EBDF'],
+    '② Propose ⟷ critique': ['#B25A36', '#F4E4DA'],
+    '④ Design the experiments': ['#B2368C', '#F0DEEA'],
+    'Your inputs': ['#37474f', '#E7EAEE']
+  };
+  var fontsReady = (document.fonts && document.fonts.load)
+    ? Promise.allSettled([document.fonts.load("600 14px 'DM Sans'"), document.fonts.load("500 12px 'DM Mono'")])
+    : Promise.resolve();
+  fontsReady.then(function () { mermaid.run().then(function () {
+    document.querySelectorAll('#sec2 .mermaid svg').forEach(function (svg) {
+      var e = svg.querySelector('.edgePaths');
+      var host = e ? e.parentNode : svg.querySelector(':scope > g');
+      if (!host) return;
+      svg.querySelectorAll('g.cluster').forEach(function (cl) {
+        var lbl = cl.querySelector('g.cluster-label'); if (!lbl) return;
+        var c = STAGE_TITLE[lbl.textContent.trim()];
+        if (c) {
+          var el = lbl.querySelector('b') || lbl.querySelector('.nodeLabel') || lbl;
+          el.style.color = c[0]; el.style.background = c[1]; el.style.borderRadius = '4px';
+          var rect = cl.querySelector('rect');
+          if (rect) {
+            var lh = lbl.getBBox().height;
+            var rx = parseFloat(rect.getAttribute('x'));
+            var ry = parseFloat(rect.getAttribute('y'));
+            var rh = parseFloat(rect.getAttribute('height'));
+            // grow the box so the bottom-anchored title gets its own strip below the node
+            rect.setAttribute('height', rh + lh + 14);
+            lbl.setAttribute('transform', 'translate(' + (rx + 12) + ',' + (ry + rh + 4) + ')');
+          }
+        }
+        host.appendChild(lbl);
+      });
+      // the grown boxes + moved titles can extend past mermaid's original viewBox — refit it
+      var bb = svg.getBBox();
+      svg.setAttribute('viewBox', (bb.x - 4) + ' ' + (bb.y - 4) + ' ' + (bb.width + 8) + ' ' + (bb.height + 8));
+    });
+  }); });
+</script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+research_question: When does structured pruning reduce inference cost while preserving factual accuracy?
+field: efficient language-model inference
+expertise: model compression and evaluation
+concepts:
+  - term: structured pruning
+    weight: 0.9
+  - term: factual accuracy
+    weight: 0.8
+# Required whenever `concepts` are set: the priority annotation those weights
+# build records who authored the preference, and its author may not be empty.
+priority_author: Example Researcher
+priority_focus: rank pruning-vs-factuality hypotheses ahead of pure latency work
+target_outcomes:
+  - lower inference latency
+  - preserved factual accuracy
+methods:
+  - controlled ablation
+  - benchmark evaluation
+interest: which pruning strategies preserve factual accuracy at useful compression ratios
+seed_papers:
+  - title: Example seed paper
+    url: https://example.org/paper
+exclude_terms:
+  - image-only models
+reader_lexicon: reader-lexicons/example.yaml
+venue_preference:
+  - ACL
+k_judges: 3
+experiment_refine_rounds: 1
+confirm:
+  mode: top_k
+  k: 2

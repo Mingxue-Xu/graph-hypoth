@@ -1,0 +1,117 @@
+# API configuration.
+#
+# Replace the two <VENDOR>/<MODEL_ID> placeholders with OpenRouter catalog
+# slugs. Export OPENROUTER_API_KEY before running. Retrieval uses HTTP/API
+# sources only; no Claude or Codex web-search subprocess is enabled.
+
+agents:
+  builder:
+    temperature: 0.1
+    model:
+      provider: openrouter
+      model_id: <VENDOR>/<MODEL_ID>
+      api_key_env: OPENROUTER_API_KEY
+      base_url: https://openrouter.ai/api/v1
+      max_tokens: 16384
+      timeout_seconds: 120
+
+  skeptical_verifier:
+    temperature: 0.0
+    model:
+      provider: openrouter
+      model_id: <VENDOR>/<MODEL_ID>
+      api_key_env: OPENROUTER_API_KEY
+      base_url: https://openrouter.ai/api/v1
+      max_tokens: 16384
+      timeout_seconds: 120
+
+retrieval:
+  enabled: true
+  mode: source_only
+  profile: default
+  sources:
+    - arxiv
+    - exa
+    - crossref
+    - openalex
+    - europepmc
+  optional_sources: []
+  final_top_k: 100
+  per_source_top_k: 25
+  fake_mode: false
+  cache_replay: true
+  ranking:
+    policy: trust_tier_then_source_rank
+    source_order:
+      - arxiv
+      - europepmc
+      - openalex
+      - crossref
+      - exa
+    trust_tier_priority:
+      authoritative_preprint: 100
+      peer_reviewed_oa: 90
+      indexed_metadata: 80
+      web_research_paper: 60
+  tool_budget:
+    max_calls_per_run: 12
+    max_calls_per_agent_round: 2
+    timeout_seconds: 30
+  artifacts:
+    enabled: true
+    write_json: true
+    write_html: true
+  resilience:
+    enabled: true
+    default:
+      enabled: true
+      max_attempts: 3
+      backoff_base_seconds: 0.5
+      backoff_max_seconds: 8.0
+      circuit_failure_threshold: 5
+      circuit_reset_seconds: 60.0
+  fulltext:
+    enabled: true
+    timeout_seconds: 15.0
+    max_bytes: 20000000
+    max_pages: 40
+  coherence:
+    enabled: true
+    embedding_enabled: true
+    embedding_model: allenai/specter2_base
+    embedding_weight: 0.6
+    citation_enabled: true
+    citation_weight: 0.4
+    judge_enabled: false
+    judge_top_k: 5
+    judge_model: null
+  source_limits:
+    exa:
+      require_api_key_env: EXA_API_KEY
+      search_type: auto
+      category: research paper
+      text: true
+      highlights: true
+      highlight_query: null
+      highlight_max_characters: 1200
+      text_max_characters: 20000
+      max_age_hours: null
+      livecrawl_timeout: null
+      include_html_tags: false
+      include_domains: null
+      exclude_domains: null
+      include_text: null
+      exclude_text: null
+      max_qps: 10
+      max_cost_dollars_per_run: 0.25
+      max_cost_dollars_per_call: 0.05
+    openalex:
+      require_api_key_env: OPENALEX_API_KEY
+      require_api_key: false
+      key_source: env
+  trust_policy:
+    arxiv: authoritative_preprint
+    crossref: indexed_metadata
+    openalex: indexed_metadata
+    europepmc: peer_reviewed_oa
+    exa: web_research_paper
