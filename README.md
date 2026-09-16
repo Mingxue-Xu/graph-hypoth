@@ -1,4 +1,11 @@
-# GraphHypoth
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logo/hypo-dark.svg">
+    <img src="docs/assets/logo/hypo-light.svg" alt="Hypo, the GraphHypoth hippo: a claim graph drawn on a hippo's face, with the hypothesis edge dashed" width="150">
+  </picture>
+</p>
+
+<h1 align="center">GraphHypoth</h1>
 
 GraphHypoth is a graph-harnessed hypothesis generation system. It turns a research
 question and the literature around it into testable hypotheses and experiment plans.
