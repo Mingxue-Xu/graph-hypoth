@@ -11,13 +11,11 @@
     <rect x="84" y="148" width="10" height="13" rx="3"/>
     <rect x="106" y="148" width="10" height="13" rx="3"/>
   </g>
-  <g fill="none" stroke="#F2B441" stroke-width="6" stroke-linecap="round">
-    <path d="M72 60 V120 M128 60 V120"/>
-    <path d="M83 90 H117" stroke-dasharray="4 11"/>
+  <g fill="#3E4864">
+    <circle cx="72" cy="120" r="7"/>
+    <circle cx="128" cy="120" r="7"/>
   </g>
   <g fill="#F2B441">
-    <circle cx="72" cy="120" r="8"/>
-    <circle cx="128" cy="120" r="8"/>
     <circle cx="72" cy="60" r="10"/>
     <circle cx="128" cy="60" r="10"/>
   </g>
