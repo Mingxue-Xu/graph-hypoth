@@ -407,6 +407,96 @@ source name. API keys (Exa, OpenAlex) load from the environment per
 [Local Setup And API Key Loading](local-setup-and-key-loading.md); a source with a
 required-but-missing key returns `status="skipped"` (never an error).
 
+### 6.1 Exa source settings
+
+Exa is not a separate retrieval path. It is the `exa` source adapter inside the
+same `RetrievalService.search_papers(...)` flow as Crossref, OpenAlex, arXiv,
+Europe PMC, and the live-web sources. Keeping Exa behind that adapter ensures
+its hits are normalized, ledgered, quote-checked, ranked, cached, and subject to
+the same run-level audit trail.
+
+Export the environment variable named by
+`retrieval.source_limits.exa.require_api_key_env` before a live run. The default
+name is `EXA_API_KEY`:
+
+```bash
+export EXA_API_KEY='...'
+```
+
+Do not put the key value in YAML or a tracked repository file. For external key
+files, use the credential-loading options described in
+[Local Setup And API Key Loading](local-setup-and-key-loading.md).
+
+Exa can be required or optional:
+
+```yaml
+retrieval:
+  sources:
+    - crossref
+  optional_sources:
+    - exa
+    - openalex
+```
+
+An optional Exa source that cannot run is recorded as skipped while the rest of
+retrieval continues. Put `exa` under `sources` only when a run must require it.
+
+Configure provider-specific behavior under `retrieval.source_limits.exa`:
+
+```yaml
+retrieval:
+  source_limits:
+    exa:
+      require_api_key_env: EXA_API_KEY
+      search_type: auto
+      category: research paper
+      text: true
+      highlights: true
+      highlight_max_characters: 1200
+      text_max_characters: 20000
+      max_qps: 10
+      max_cost_dollars_per_call: 0.05
+      max_cost_dollars_per_run: 0.25
+```
+
+The main settings are:
+
+- `search_type`: `auto`, `neural`, or `keyword`.
+- `category`: provider-side category, normally `research paper`.
+- `text`: request extracted source text.
+- `highlights`: request relevant passages for evidence selection.
+- `highlight_query`: optional query used to target highlights.
+- `include_domains` / `exclude_domains`: restrict web domains.
+- `include_text` / `exclude_text`: provider text filters. Each accepts at most
+  one phrase of five words or fewer.
+- `max_qps`: local pacing ceiling.
+- `max_cost_dollars_per_call` / `max_cost_dollars_per_run`: guards that skip a
+  request before it would exceed the configured budget.
+
+Result count is controlled by retrieval-level caps, not by an Exa-only setting.
+Normal searches request `retrieval.per_source_top_k`; Exa fallback backfill uses
+the larger `retrieval.final_top_k` so it can cover a failed source.
+
+Normal retrieval sends the query to Exa search. Programmatic callers may pass
+`urls` or `target_urls` through `SearchPaperFilters`; that switches the adapter
+to an Exa contents request. Domain filters and semantic ranking apply to search
+requests, not direct URL contents requests. The adapter prefers verified
+highlights when source text is available, then falls back to a source-text
+window or a shaped summary. Provider cost metadata is recorded when Exa supplies
+it.
+
+Common Exa troubleshooting:
+
+- `EXA_API_KEY` missing: export the configured variable in the same process
+  environment as GraphHypoth.
+- Exa is skipped by a cost guard: raise the relevant limit deliberately, lower
+  `retrieval.per_source_top_k`, or reduce direct-URL content options.
+- `exa-py Exa client unavailable`: install the retrieval dependencies with
+  `python -m pip install -e ".[retrieval]"`.
+- Exa fails while another source succeeds: inspect per-source status and
+  warnings in the retrieval artifacts; optional-source failure does not discard
+  successful results from other sources.
+
 `codex_web` is deliberately absent from both default source lists. Selecting it
 requires `source_limits.codex_web.model_id`; saved `codex login` authentication;
 and a Codex CLI version that supports strict config, `web_search="live"`,

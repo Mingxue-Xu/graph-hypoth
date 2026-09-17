@@ -33,6 +33,7 @@
   #sec2 code, #sec2 .edgeLabel {
     font-family: 'DM Mono', ui-monospace, SFMono-Regular, Menlo, monospace; }
   #sec2 .edgeLabel { font-size: 12px; }
+  .nodeLabel .role { font-size: 1.3em; font-weight: 800; white-space: nowrap; }
 </style>
 </head>
 <body>
@@ -118,10 +119,10 @@ researcher or profile policy"}:::user
  end
  subgraph LA["Agents — seven specialized LLM roles"]
  direction TB
- a1("Extraction Agent
+ a1("<span class='role'>Extraction Agent</span>
 generative role
 concept nodes + directed relationships"):::extraction
- a2("Evidence Reviewer
+ a2("<span class='role'>Evidence Reviewer</span>
 critical role
 up-front: every edge with retrieved evidence"):::evidence
  subgraph LT["Research Synthesist — one persistent thread · generative role"]
@@ -135,22 +136,23 @@ candidate hypotheses · mechanism chains
 repair flagged chain steps and terms
 + derive new candidates"):::synthesist
  end
- a4("Critic Panel — two independent critic agents
+ a4("<span class='role'>Critic Panel</span>
+two independent critic agents
 builder + critic_panel backends · skeptical_verifier as third judge
 joint pool grading · grounded · single pass"):::critic
- a6("Experiment Designer
+ a6("<span class='role'>Experiment Designer</span>
 generative role
 one plan per confirmed hypothesis"):::experimentDesigner
- a7("Experiment Validator
+ a7("<span class='role'>Experiment Validator</span>
 critical role
 five criteria · one revision pass"):::experimentValidator
- a5("Narrative Elaborator — optional
-generative role · renders summaries from plan"):::elaborator
+ a5("<span class='role'>Narrative Elaborator</span>
+optional · generative role · renders summaries from plan"):::elaborator
  end
  subgraph LC["Deterministic procedures"]
  direction TB
  cret("Literature retrieval + query log
-arXiv · Crossref · OpenAlex · Europe PMC · web search (Exa)"):::det
+arXiv · Crossref · OpenAlex · Europe PMC · Exa · live web"):::det
  cfuse("Evidence aggregation → edge verdict
 deterministic fusion of per-passage signals
 confidence threshold 0.5 · near-tie δ 0.025
@@ -295,12 +297,12 @@ interests"]:::user
  prio["Your topic priorities"]:::user
  end
  subgraph SB["① Map your claim"]
- ex(["Extraction Agent
+ ex(["<span class='role'>Extraction Agent</span>
 turns your claim into concepts
 joined by directed links"]):::extraction
  end
  subgraph SV["③ Check the evidence"]
- er(["Evidence Reviewer
+ er(["<span class='role'>Evidence Reviewer</span>
 reads every short-listed passage
 behind a link, all in one sitting"]):::evidence
  vd["a fixed rule turns those readings
@@ -308,19 +310,19 @@ into the verdict — the agent
 never decides"]:::det
  end
  subgraph SX["② Propose ⟷ critique"]
- th(["Research Synthesist
+ th(["<span class='role'>Research Synthesist</span>
 one ongoing conversation:
 mine ideas → propose → revise,
 the source papers always in hand"]):::synthesist
  subgraph PAN["Critic Panel"]
  direction LR
- j1(["Critic agent A
+ j1(["<span class='role'>Critic agent A</span>
 grades + ranks every
 proposal on its own"]):::critic
- j2(["Critic agent B
+ j2(["<span class='role'>Critic agent B</span>
 grades + ranks every
 proposal on its own"]):::critic
- j3(["Third judge
+ j3(["<span class='role'>Third judge</span>
 reads the same proposals,
 joins only when A and B
 disagree"]):::critic
@@ -329,11 +331,11 @@ disagree"]):::critic
 into a pass gate + final ranking"]:::det
  end
  subgraph SE["④ Design the experiments"]
- des(["Experiment Designer
+ des(["<span class='role'>Experiment Designer</span>
 drafts a full test plan for each
 hypothesis you confirmed,
 grounded in the methods literature"]):::experimentDesigner
- evl(["Experiment Validator
+ evl(["<span class='role'>Experiment Validator</span>
 grades the plan on five criteria,
 sends it back once if needed"]):::experimentValidator
  end

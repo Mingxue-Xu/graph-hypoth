@@ -25,7 +25,7 @@ a retrieved source asserts, not strictly causal relationships. The
 <p align="center">
   <img src="docs/assets/web-app-demo.gif" alt="The GraphHypoth web app running the complete pipeline: live stage progress, confirming hypotheses in the browser, then the surfaced hypotheses, the claim graph, evidence quotes, and an experiment plan" width="820">
 </p>
-<p align="center"><em>The <a href="#web-app-settings-2-and-3">web app</a> on a real run: stage progress, confirming hypotheses in the browser, then the results (surfaced hypotheses, the claim graph, evidence quotes, an experiment plan).</em></p>
+<p align="left"><em>The <a href="#web-app-settings-2-and-3">web app</a> on a real run: stage progress, confirming hypotheses in the browser, then the results (surfaced hypotheses, the claim graph, evidence quotes, an experiment plan). Normally a complete run lasts over one hour.</em></p>
 
 ## What A Complete Run Does
 
@@ -58,8 +58,12 @@ only the `support` evidence role is scheduled, so an edge commits as
 `unverified`. Hypothesis edges are not evidence-reviewed; their grounding comes
 from the experiment stage.
 
-See the [pipeline diagram](docs/architecture-design/overview/simplified-pipeline-digram.html)
-for the agent roles, gates, and transactions.
+<p align="center">
+  <a href="docs/assets/pipeline-plain-words.png"><img src="docs/assets/pipeline-plain-words.png" alt="The GraphHypoth pipeline in plain words: your inputs feed the Extraction Agent, which writes concepts and links into the claim graph; the Evidence Reviewer checks every link; the Research Synthesist proposes hypotheses that two critic agents (and a third judge on disagreement) grade and rank; confirmed hypotheses go to the Experiment Designer and Experiment Validator" width="900"></a>
+</p>
+
+The [complete pipeline diagram](docs/assets/pipeline-complete.png) shows every
+agent role, gate, and transaction.
 
 ## Commands
 
@@ -162,7 +166,7 @@ For example, with Claude Code:
 ```bash
 mkdir -p runtime_artifacts
 cp config/claude-code.yaml runtime_artifacts/config-claude-code.yaml
-$EDITOR runtime_artifacts/config-claude-code.yaml   # check model IDs and options
+vim runtime_artifacts/config-claude-code.yaml
 python scripts/run_example.py \
   --config runtime_artifacts/config-claude-code.yaml \
   --run-dir runtime_artifacts/example-coding-agent
@@ -463,9 +467,9 @@ the same pool is offered to every edge. The experiment stage then adds one
 targeted methods query per confirmed hypothesis.
 
 Retrieved records are de-duplicated across sources, quote-checked, ranked by
-relevance and trust tier, and cached per run. See
-[paper retrieval](docs/guides/paper_retrieval.md) and the
-[Exa guide](docs/guides/exa-config.md).
+relevance and trust tier, and cached per run. Exa is configured as one retrieval
+source inside that shared flow; see
+[paper retrieval](docs/guides/paper_retrieval.md).
 
 ## Cost Measurement
 
@@ -477,29 +481,15 @@ flag, and the OpenRouter reconciler belonged to the removed debate path and went
 with it. Measuring a run's dollar cost means reading the audit events, or the
 provider's own billing.
 
-## Development
-
-```bash
-python -m pytest
-```
-
-The deterministic suite passes fakes for every model-backed seam and needs no
-credentials. Live provider and retrieval tests are marked (`live`, `live_exa`,
-`live_openalex`, and so on) and skipped unless requested. Scoring weights,
-thresholds, and caps live in `src/graph_config_defaults.py` and
-`src/retrieval/scoring_defaults.py`, each with a version string that appears
-in audit output.
-
 ## Documentation
 
 ### System Architecture Design and Feature Configuration Guides
 - [Pipeline diagram](docs/architecture-design/overview/simplified-pipeline-digram.html):
   the complete pipeline and a plain-words version.
 - Feature Configuration Guides
-  - [local setup and keys](docs/guides/local-setup-and-key-loading.md)
-  - [model configuration](docs/guides/model-configuration.md)
+  - [local setup, keys, and development checks](docs/guides/local-setup-and-key-loading.md)
+  - [model configuration and scoring defaults](docs/guides/model-configuration.md)
   - [paper retrieval](docs/guides/paper_retrieval.md)
-  - [Exa](docs/guides/exa-config.md)
   - [local CLI backends](docs/guides/cli-subagent-backends.md)
   - [reader lexicon procedure](docs/pipelines/user-lexicon.md)
 
@@ -508,7 +498,7 @@ in audit output.
 Five reports in [docs/research](docs/research/README.md) review the system
 from complementary angles. Each has a short decision version beside it.
 
-- [Claims Before Causes](docs/research/claims-before-causes.md): why the
+- [Claims Before Causes](docs/research/claims-before-causes.md): why the current
   pipeline stores the relationships that sources assert as a claim graph
   rather than as a causal model, why it carries causal typing and
   deterministic measurement anyway, and the conditions under which claims
@@ -516,10 +506,7 @@ from complementary angles. Each has a short decision version beside it.
 - [From Traceable Claims to Testable Hypotheses](docs/research/traceable-claims-to-testable-hypotheses.md):
   what each check in the implementation establishes, what still needs
   evidence, and where the system sits among contemporary discovery systems.
-- [Research Agenda](docs/research/research-agenda.md): four studies that
-  follow from those findings, in a chain: expose claims to counterevidence,
-  calibrate acceptance, revise conclusions with execution feedback, and
-  demonstrate researcher benefit.
+
 - [Which Agents Go Local?](docs/research/which-agents-go-local.md): since the
   deterministic core rather than model judgment carries the guarantees, which
   agent roles can run on small local models, and what a weaker backend
@@ -527,3 +514,7 @@ from complementary angles. Each has a short decision version beside it.
 - [Retrieval for Local Agents](docs/research/retrieval-for-local-agents.md):
   what retrieval substitutes for (stored knowledge) and what still needs a
   model (reading evidence into a typed judgment), role by role.
+- [Other Relevant Qestions](docs/research/research-agenda.md): four studies that
+  follow from those findings, in a chain: expose claims to counterevidence,
+  calibrate acceptance, revise conclusions with execution feedback, and
+  demonstrate researcher benefit.

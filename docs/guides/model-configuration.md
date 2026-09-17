@@ -123,3 +123,12 @@ independently configured and explicitly selected as
 `retrieval.sources` (or `optional_sources`). It may be used with subagent
 completion roles, OpenRouter-backed roles, or a mixed panel; neither setting
 implicitly enables the other.
+
+## Scoring Defaults
+
+Model configuration chooses the LLM backend. It does not change deterministic
+scoring weights, thresholds, or caps. Those constants live in
+`src/graph_config_defaults.py` and `src/retrieval/scoring_defaults.py`.
+
+Each scored output records the relevant defaults version in audit output, so a
+run can be interpreted against the constants that produced it.
