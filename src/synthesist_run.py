@@ -233,11 +233,13 @@ def run_synthesist(
     connected_render: bool = True,
     input_fn: Callable[[str], str] = input,
     output_fn: Callable[[str], None] = print,
+    confirm_fn: ConfirmFn | None = None,
 ) -> GraphRunResult:
     """Drive the full standalone Research Synthesist run (live LLM). Retrieves once, curates the
     judge corpus, builds the seams on their configured role backends, and runs the one-call
     workflow with the
-    confirm hook resolved from the profile's confirm policy, and (when ``trace_dir`` is set) writes
+    confirm hook resolved from the profile's confirm policy (or the injected ``confirm_fn``, which
+    the web app uses to wait for a browser selection instead of stdin), and (when ``trace_dir`` is set) writes
     the deterministic trace report plus per-hypothesis prose by default. Once the trace report is
     written, the default subpipeline renders the per-hypothesis connected pages unless
     ``connected_render`` is disabled."""
@@ -296,7 +298,11 @@ def run_synthesist(
         thread_id=thread_id, synthesist=spec, evidence=evidence, log_llm_calls=True,
         retrieval_open_risks=retrieval_open_risks,
     )
-    confirm = confirm_fn_for(profile.confirm, input_fn=input_fn, output_fn=output_fn)
+    confirm = (
+        confirm_fn
+        if confirm_fn is not None
+        else confirm_fn_for(profile.confirm, input_fn=input_fn, output_fn=output_fn)
+    )
     # Tier B emphasis re-rank: bind the authored priority + policy into the cycle's reranker hook
     # (identity when no priority is authored, so claim-mode / no-priority runs are unaffected).
     authored_concepts = [(concept.term, concept.weight) for concept in profile.concepts]

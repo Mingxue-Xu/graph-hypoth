@@ -22,6 +22,11 @@ mediators), but the edges in the graph indicate the relationships that
 a retrieved source asserts, not strictly causal relationships. The
 [research discussion](#research-discussion) talks about the implementation details.
 
+<p align="center">
+  <img src="docs/assets/web-app-demo.gif" alt="The GraphHypoth web app running the complete pipeline: live stage progress, confirming hypotheses in the browser, then the surfaced hypotheses, the claim graph, evidence quotes, and an experiment plan" width="820">
+</p>
+<p align="center"><em>The <a href="#web-app-settings-2-and-3">web app</a> on a real run: stage progress, confirming hypotheses in the browser, then the results (surfaced hypotheses, the claim graph, evidence quotes, an experiment plan).</em></p>
+
 ## What A Complete Run Does
 
 A complete run involves 8 pipeline stages as follows.
@@ -58,12 +63,13 @@ for the agent roles, gates, and transactions.
 
 ## Commands
 
-The package installs two console scripts.
+The package installs three console scripts.
 
 | Command | What it runs | Builds the claim graph? |
 | --- | --- | --- |
 | `graph-hypoth-synthesist --profile <yaml>` | The complete pipeline above: planned retrieval, extraction, evidence review, priority, Synthesist and Critic Panel, confirmation, experiment design, export, trace and hypothesis pages | Yes |
 | `graph-hypoth-orchestrate --claim "..."` | Extraction, retrieval, evidence review, priority, and export only. No Synthesist, panel, or experiment stage is wired, and the run records that as an open risk | Yes, evidence core only |
+| `graph-hypoth-web` | A local web app around the complete pipeline: start a run from a profile, follow its progress, confirm hypotheses in the browser, and browse every run's claim graph and pages ([guide](docs/guides/web-app.md)) | Yes, through the `graph-hypoth-synthesist` driver |
 
 ## Quick Start
 
@@ -242,6 +248,33 @@ key-file loading, and every credential the code reads are in
 [local setup and API key loading](docs/guides/local-setup-and-key-loading.md).
 
 </details>
+
+### Web app (settings 2 and 3)
+
+`graph-hypoth-web` wraps the same driver in a local web app, so the two moments
+that need a person, following a run that takes tens of minutes and choosing
+which hypotheses to commit, happen in the browser instead of a terminal.
+Install the `web` extra (included in `all`) and start the server from the
+repository root:
+
+```bash
+python -m pip install -e ".[web]"
+graph-hypoth-web
+```
+
+It opens `http://127.0.0.1:8765/`. From there you start a run from a profile
+and config (pick `config/claude-code.yaml` or `config/codex.yaml`, or your own
+copy with real model ids; the shipped `evidence-evaluation.yaml` is a template
+and the app refuses its placeholders before starting), watch the stage
+progress, answer the confirmation step when the
+profile's policy is `interactive` (or when you tick *ask me in the browser*),
+and, once the run finishes, open the trace and connected pages and inspect the
+claim graph on an interactive canvas: click an edge for its status, verdict,
+evidence quotes, and experiment plan. Runs are saved under
+`runtime_artifacts/web/<run-id>/` with the same artifacts as a CLI run plus
+`progress.jsonl` and `web_run.json`; an existing run directory can also be
+opened without re-running. The server runs one pipeline at a time and binds to
+the loopback address. See the [web app guide](docs/guides/web-app.md).
 
 ## Artifacts of a Single Run
 

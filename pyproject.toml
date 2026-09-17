@@ -17,7 +17,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8,<9", "ruff>=0.8,<1", "mypy>=1.13,<2"]
+dev = ["pytest>=8,<9", "ruff>=0.8,<1", "mypy>=1.13,<2", "httpx>=0.27,<1"]
 retrieval = [
   "langchain-community>=0.3,<0.4",
   "arxiv>=2,<3",
@@ -25,6 +25,8 @@ retrieval = [
   "exa-py>=2.12,<3",
 ]
 retrieval-coherence = ["sentence-transformers>=3,<4"]
+# The local web app: FastAPI serves the API + static page, uvicorn runs it.
+web = ["fastapi>=0.110,<1", "uvicorn>=0.27,<1"]
 all = [
   "pytest>=8,<9",
   "ruff>=0.8,<1",
@@ -34,15 +36,22 @@ all = [
   "pymupdf>=1.24,<2",
   "exa-py>=2.12,<3",
   "sentence-transformers>=3,<4",
+  "fastapi>=0.110,<1",
+  "uvicorn>=0.27,<1",
+  "httpx>=0.27,<1",
 ]
 
 [project.scripts]
 graph-hypoth-orchestrate = "src.cli:main"
 graph-hypoth-synthesist = "src.synthesist_run:main"
+graph-hypoth-web = "src.web.server:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["src*"]
+
+[tool.setuptools.package-data]
+"src.web" = ["static/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

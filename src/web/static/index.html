@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GraphHypoth</title>
+<link rel="icon" href="/static/logo.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style.css">
+<!-- Layout and pan/zoom libraries, pinned. The page degrades to the edge table if they cannot load. -->
+<script src="https://cdn.jsdelivr.net/npm/dagre@0.8.5/dist/dagre.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js" defer></script>
+<script src="/static/app.js" defer></script>
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="#/"><img src="/static/logo.svg" alt="" width="34" height="34"><span>GraphHypoth</span></a>
+  <nav class="topnav">
+    <a href="#/">Runs</a>
+    <a href="/api/docs" target="_blank" rel="noopener">API</a>
+  </nav>
+  <a id="active-pill" class="pill pill-running topbar-active" href="#/" hidden></a>
+</header>
+<main id="view" class="container"><p class="muted">Loading…</p></main>
+<footer class="foot"><span id="foot-info"></span></footer>
+</body>
+</html>
