@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logo/hypo-dark.svg">
-    <img src="docs/assets/logo/hypo-light.svg" alt="Hypo, the GraphHypoth hippo: a claim graph drawn on a hippo's face, with the hypothesis edge dashed" width="150">
+    <img src="docs/assets/logo/hypo-light.svg" alt="Hypo, the GraphHypoth hippo mascot" width="150">
   </picture>
 </p>
 
