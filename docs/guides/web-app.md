@@ -31,6 +31,10 @@ scripts/web_demo.py` serves the same page over a fake pipeline that plays the
 eight stages in about a minute, pauses for confirmation, and writes an invented
 run (every source URL points at example.org) under `runtime_artifacts/web-demo`.
 
+The demo GIF in the README is recorded from a real run with
+`python scripts/record_web_demo.py live --out docs/assets/web-app-demo.gif`
+(or `browse` for an existing run); rerun it after a visible UI change.
+
 ## Screens
 
 **Start a run.** Pick a research profile and a system config (any YAML under

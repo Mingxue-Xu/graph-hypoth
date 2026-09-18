@@ -115,7 +115,7 @@ def create_app(manager: RunManager) -> FastAPI:
         # or stylesheet after the package is updated.
         version = int(max(path.stat().st_mtime for path in STATIC_DIR.iterdir() if path.is_file()))
         page = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
-        for asset in ("style.css", "app.js"):
+        for asset in ("style.css", "app.js", "logo.svg"):
             page = page.replace(f"/static/{asset}", f"/static/{asset}?v={version}")
         return HTMLResponse(page)
 
