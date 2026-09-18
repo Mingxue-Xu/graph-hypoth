@@ -259,18 +259,25 @@ are guarded by per-call and per-run cost limits in the YAML config. arXiv,
 Crossref, and Europe PMC need no credential at all; OpenAlex and Apify are
 covered in [Every Credential This Repo Reads](#every-credential-this-repo-reads).
 
-For Exa setup details, see [Exa API Setup Guide](exa-config.md).
+For Exa setup details, see the
+[Paper Retrieval Exa source settings](paper_retrieval.md#61-exa-source-settings).
 For saved-login CLI retrieval, enable the separate `claude_web` or `codex_web`
 source as documented in [Local CLI Subagent Backends And Live-Web
 Sources](cli-subagent-backends.md); neither is part of the default source set.
 
 ## Development Checks
 
-Run the test suite:
+The deterministic suite passes fakes for every model-backed seam and needs no
+provider credentials. Run it with:
 
 ```bash
 python -m pytest
 ```
+
+Live provider and retrieval tests are marked (`live`, `live_exa`,
+`live_openalex`, and so on) and skipped unless explicitly selected and their
+credentials are available. The [Live Test Credentials](#live-test-credentials)
+section above lists the environment variables those opt-in checks read.
 
 Run a deterministic no-credential smoke check:
 
