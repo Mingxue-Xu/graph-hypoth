@@ -9,23 +9,23 @@
 
 GraphHypoth is a graph-harnessed hypothesis generation system. It turns a research
 question and the literature around it into testable hypotheses and experiment plans.
-It builds a **claim graph**: nodes are concepts, directed edges are the relationships
+
+It builds a **claim graph**: nodes are *concepts*, directed edges are the *relationships*
 that retrieved sources assert between
 them, and each edge carries the evidence retrieved for it and a verification
 status. The graph and the deterministic code around it govern how those
 relationships, and the hypotheses generated from them, are used in later
-research stages. Language models supply structured proposals and appraisals;
-however, they never write graph state directly.
+research stages. 
 
 The graph is inspired by causal graphs (directed edges, confounders,
 mediators), but the edges in the graph indicate the relationships that
-a retrieved source asserts, not strictly causal relationships. The
-[research discussion](#research-discussion) talks about the implementation details.
+a retrieved source asserts, not strictly causal relationships. We have
+[discussion](#research-discussion) section talking about the implementation details.
 
 <p align="center">
   <img src="docs/assets/web-app-demo.gif" alt="The GraphHypoth web app running the complete pipeline: live stage progress, confirming hypotheses in the browser, then the surfaced hypotheses, the claim graph, evidence quotes, and an experiment plan" width="820">
 </p>
-<p align="left"><em>The <a href="#web-app-settings-2-and-3">web app</a> on a real run: stage progress, confirming hypotheses in the browser, then the results (surfaced hypotheses, the claim graph, evidence quotes, an experiment plan). Normally a complete run lasts over one hour.</em></p>
+<p align="left"><em>An actual run with the <a href="#web-app-settings-2-and-3">web app</a>: the surfaced hypotheses, the claim graph, evidence quotes, an experiment plan. Normally a complete run lasts over one hour.</em></p>
 
 ## What A Complete Run Does
 
@@ -33,22 +33,15 @@ A complete run involves 8 pipeline stages as follows.
 
 | Step | Stage | Description |
 | --- | --- | --- |
-| 1 | **Extraction** | The Extraction Agent turns the seed claim or research goal into concept nodes and directed edges. Every edge starts `unverified`. |
-| 2 | **Retrieval** | Literature is retrieved for the claim at the start of the run (bounded Crossref metadata is required, with Exa and OpenAlex optional in the current config; arXiv is opt-in); the profile path plans several sub-queries and fuses them into one pool. A deterministic scorer short-lists the most relevant passages for each edge. |
-| 3 | **Evidence evaluation** | The Evidence Reviewer grades each short-listed passage for one edge: how it bears on the relationship and how sound its methods are. It is forbidden to state a verdict. Deterministic code fuses the grades into a status and confidence and records them on the edge. |
-| 4 | **Priority** | The researcher's weighted topics from the profile are recorded on matching nodes and steer which surfaced hypotheses are listed first. They never change a status or confidence. |
-| 5 | **Hypothesis development** | The Research Synthesist, in one persistent thread, mines new concepts from the passages, proposes candidate hypotheses over the committed graph, and revises them after a Critic Panel review. It sees the graph's nodes and edges and the literature passages, but not the recorded edge statuses, confidences, or scores. Deterministic gates then filter the candidates and rank the survivors. |
+| 1 | **Extraction** | The **Extraction Agent** turns the seed claim or research goal into concept nodes and directed edges. Every edge starts `unverified`. |
+| 2 | **Retrieval** | Literature is retrieved for the claim at the start of the run. A deterministic scorer short-lists the most relevant passages for each edge. |
+| 3 | **Evidence evaluation** | The **Evidence Reviewer** grades each short-listed passage for one edge. The deterministic code fuses the grades into a status and confidence and records them on the edge. |
+| 4 | **Priority** | The researcher's weighted topics (configured before the run) from the profile are recorded on matching nodes, and steer which surfaced hypotheses are listed first. They never change a status or confidence. |
+| 5 | **Hypothesis development** | The **Research Synthesist**, in one persistent thread, mines new concepts from the passages, proposes candidate hypotheses over the committed graph, and revises them after a **Critic Panel** review. Deterministic gates then filter the candidates and rank the survivors. |
 | 6 | **Confirmation and commit** | The top-ranked candidates are shown to the researcher, or resolved by the profile's confirmation policy. Only confirmed candidates are committed, as new `unverified` edges, and only those whose commit succeeds move on. |
-| 7 | **Experiment design** | For each committed hypothesis the Experiment Designer drafts a plan grounded in a targeted methods retrieval and the graph's confounder and mediator nodes; the Experiment Validator grades it on five criteria with one revision round by default. A content-complete plan is committed against the hypothesis edge. |
-| 8 | **Export** | The graph, an edge table, an audit memo, one trace page per surfaced hypothesis, one standalone connected page per *committed* hypothesis, and a provenance database are written. |
+| 7 | **Experiment design** | For each committed hypothesis the **Experiment Designer** drafts a plan grounded in a targeted methods retrieval and the graph's confounder and mediator nodes; the **Experiment Validator** grades it on five criteria with one revision round by default. A content-complete plan is committed against the hypothesis edge. |
+| 8 | **Export** | The graph, an edge table, an audit memo, one trace page per surfaced hypothesis, one standalone connected page per *committed* hypothesis, and a provenance database. |
 
-Each pipeline stage requests proposed graph updates to the validation mechanism
-of this system. Each request declares its change type and includes the fields
-that type requires. Before updating the graph, deterministic code checks five
-conditions: a valid structure (schema), resolvable references,
-a base revision that matches the current graph, an allowed status transition,
-and no repeated updates from the same request (idempotence). Each accepted or
-rejected request is logged with a receipt, so a run can be replayed and audited.
 
 Edge statuses are `unverified`, `supported`, `contradicted`,
 `qualified`, `not_causal`, and `insufficient`. The current default configuration
@@ -58,12 +51,14 @@ only the `support` evidence role is scheduled, so an edge commits as
 `unverified`. Hypothesis edges are not evidence-reviewed; their grounding comes
 from the experiment stage.
 
+The following diagram shows how the agents interact with each other.
+
 <p align="center">
   <a href="docs/assets/pipeline-plain-words.png"><img src="docs/assets/pipeline-plain-words.png" alt="The GraphHypoth pipeline in plain words: your inputs feed the Extraction Agent, which writes concepts and links into the claim graph; the Evidence Reviewer checks every link; the Research Synthesist proposes hypotheses that two critic agents (and a third judge on disagreement) grade and rank; confirmed hypotheses go to the Experiment Designer and Experiment Validator" width="900"></a>
 </p>
 
-The [complete pipeline diagram](docs/assets/pipeline-complete.png) shows every
-agent role, gate, and transaction.
+There is also a [complete pipeline diagram](docs/assets/pipeline-complete.png) showing every
+agent role, gate, and transaction during a complete run.
 
 ## Commands
 
@@ -91,24 +86,21 @@ scoring, graph commits, and standard exports. Generated results can vary in
 all three settings.
 
 ### Non-Python Setup
-#### Setting 1: Pure coding agent (Claude Code or Codex)
+#### Setting 1: Throw this repo to your coding agent
 
-Install and sign in to [Claude Code](https://code.claude.com/docs/en/setup) or
-[Codex CLI](https://learn.chatgpt.com/docs/codex/cli), then open this repository
-in an interactive session with web search available. This is a prompt-driven
-research workflow; no GraphHypoth Python installation or backend YAML is needed.
-
-Paste the following prompt, replacing the research question and priorities:
+<details>
+<summary>
+Suggested prompt (replacing the research question and priorities)
+</summary>
 
 ```text
 Use GraphHypoth's research stages to investigate:
 Question: [your research question]
 Priorities: [your field, constraints, and desired outcomes]
 
-Read this README and the pipeline diagram for the research stages. Carry out
+Read this README, the pipeline diagram and the codebase. Carry out
 the research directly in this agent session,
-using your own reasoning and native web search/fetch tools. Keep orchestration
-in this session rather than launching the Python pipeline or nested CLI calls.
+using your own reasoning and native web search/fetch tools. 
 
 Extract concepts and source-asserted relationships, retrieve and assess
 evidence, then propose hypotheses. Perform a separate critic pass (using
@@ -121,12 +113,17 @@ and experiment plans under `runtime_artifacts/example-agent/`. Label them as
 agent-authored exploratory outputs and record any skipped stages or checks.
 Leave the repository implementation unchanged.
 ```
+</details>
 
-The resulting reports and draft graph are agent-authored. The Python pipeline's
-validation gates, scoring rules, receipt log, and export format are only enforced
-when that code runs; following the stages in a prompt does not provide those
-guarantees. Asking an agent to launch the Python pipeline is also convenient,
-and uses setting 2 or 3 depending on its backend configuration.
+
+The resulting reports and graph are authored by *your coding agent*. 
+Alternatively, you can ask your coding agents to *launch subagents as LLM live calls*.
+
+The Python pipeline's
+validation gates, scoring rules, receipt log, and export format are only available
+when the exact python code is executed. 
+However, letting your coding agents follow the prompt does not provide these certainly (it depends the exact harness of your coding agents). 
+
 
 ### Python setup (settings 2 and 3)
 
@@ -144,11 +141,14 @@ The `all` extra includes the retrieval, retrieval-coherence, and development
 dependencies. The current default retrieval coherence downloads the pinned
 [`allenai/specter2_base`](https://huggingface.co/allenai/specter2_base) model
 (approximately 870 MB) into the Hugging Face cache;
-it is not bundled with this repository. If that model cannot be loaded, most
+it is not bundled with this repository and requires extra downloading. 
+
+If that model cannot be loaded, most
 embedding-based scoring falls back to lexical similarity, but extraction can fail
 when it produces concept-merge candidates, so production runs should cache the
-model in advance. The standalone [example script](scripts/run_example.py) runs
-the complete pipeline. Both settings below use the same example research profile;
+model in advance. 
+
+The standalone [example script](scripts/run_example.py) runs the complete pipeline. Both settings below use the same example research profile;
 choose one backend configuration before running it.
 
 #### Setting 2: Python workflow + coding-agent CLI
@@ -180,12 +180,12 @@ for better Critic Panel setting, such that the panel is not one model voting thr
 See the [CLI backend guide](docs/guides/cli-subagent-backends.md) for process
 isolation, supported options, and limitations.
 
-Runs show live progress on stderr: pipeline stages, retrieval attempts, evidence
+<!-- Runs show live progress on stderr: pipeline stages, retrieval attempts, evidence
 links, critic rounds, and experiment counts. During a silent operation, a heartbeat
 every 30 seconds shows the active work and elapsed time. Add `--quiet` to suppress
 progress, or `--progress-jsonl runtime_artifacts/progress.jsonl` to save structured
 events as well. These options work with `scripts/run_example.py` and both CLI
-commands, for settings 2 and 3.
+commands, for settings 2 and 3. -->
 
 #### Setting 3: Python workflow + APIs
 
@@ -193,8 +193,8 @@ commands, for settings 2 and 3.
 and [arXiv](https://arxiv.org/), [Exa](https://exa.ai/), [Crossref](https://www.crossref.org/),
 [OpenAlex](https://openalex.org/), and [Europe PMC](https://europepmc.org/) for retrieval. Replace
 the two `<VENDOR>/<MODEL_ID>` placeholders with OpenRouter catalog slugs, then
-export the required credentials. `OPENALEX_API_KEY`for OpenAlex retrieval service is optional for access but
-recommended for a higher quota.
+export the required credentials. `OPENROUTER_API_KEY` and `EXA_API_KEY` are both mandatory;
+`OPENALEX_API_KEY` is optional (OpenAlex works keyless, the key only raises the quota).
 
 ```bash
 mkdir -p runtime_artifacts
@@ -253,7 +253,7 @@ key-file loading, and every credential the code reads are in
 
 </details>
 
-### Web app (settings 2 and 3)
+### Web app (accompany with settings 2 and 3)
 
 `graph-hypoth-web` wraps the same driver in a local web app, so the two moments
 that need a person, following a run that takes tens of minutes and choosing
@@ -268,24 +268,30 @@ graph-hypoth-web
 
 It opens `http://127.0.0.1:8765/`. From there you start a run from a profile
 and config (pick `config/claude-code.yaml` or `config/codex.yaml`, or your own
-copy with real model ids; the shipped `evidence-evaluation.yaml` is a template
+copy with real model ids.
+
+<!-- The current `evidence-evaluation.yaml` is a template
 and the app refuses its placeholders before starting), watch the stage
 progress, answer the confirmation step when the
 profile's policy is `interactive` (or when you tick *ask me in the browser*),
 and, once the run finishes, open the trace and connected pages and inspect the
 claim graph on an interactive canvas: click an edge for its status, verdict,
-evidence quotes, and experiment plan. Runs are saved under
+evidence quotes, and experiment plan. 
+
+Runs are saved under
 `runtime_artifacts/web/<run-id>/` with the same artifacts as a CLI run plus
 `progress.jsonl` and `web_run.json`; an existing run directory can also be
 opened without re-running. The server runs one pipeline at a time and binds to
-the loopback address. See the [web app guide](docs/guides/web-app.md).
+the loopback address.  -->
+
+See the [web app guide](docs/guides/web-app.md) for more details.
 
 ## Artifacts of a Single Run
 
 A Python pipeline run (setting 2 or 3) with both `--export-dir` and `--trace-dir`
 set writes:
 
-```text
+```bash
 <run-dir>/<candidate_id>-connected.html   # one page per committed hypothesis
 <run-dir>/trace/index.html                # surfaced ranking index
 <run-dir>/trace/<candidate_id>.html       # one page per surfaced hypothesis
@@ -295,6 +301,8 @@ set writes:
 <run-dir>/audit_memo.md                   # edge statuses, open risks, receipts
 ```
 
+<details>
+<summary>Artifacts details</summary>
 The two hypothesis page sets do not have the same membership. Every surfaced
 hypothesis gets a trace page. In a current run, a connected page requires the
 candidate's exact committed-edge binding from `plain_language.json`; the
@@ -333,6 +341,7 @@ replays cached retrieval instead of calling sources. Set
 `python scripts/render_runtime_logs.py --root runtime_logs`. Traces and export
 directories can contain prompts, provider responses, retrieved text, and local
 paths. Treat them as private until reviewed.
+</details>
 
 ## Configuration Details
 
@@ -348,8 +357,11 @@ and the **Narrative Elaborator** (runs for trace reports unless `--no-elaborate`
 See a [pipeline illustration](docs/architecture-design/overview/simplified-pipeline-digram.html)
 for how these roles collaborate with each other.
 
+<details>
+<summary>Base Model Configs</summary>
+
 They draw
-their models from two **base model configurations**, which are configuration
+their models from two base model configurations, which are configuration
 blocks rather than agents:
 
 - `builder` is the generative default: Extraction Agent, Research Synthesist,
@@ -365,11 +377,17 @@ Any role can be given its own block (`evidence_reviewer`,
 below is a verbatim copy of
 [agent-role-relationship.mmd](docs/architecture-design/overview/agent-role-relationship.mmd),
 the source of truth; a test keeps the two in sync.
+</details>
+
+<details>
+<summary>Temperature for output diversity</summary>
+
 The `temperature` value in each block sets how much the output may vary between
 runs. `skeptical_verifier` uses 0.0, so the judging roles give the same answer to
 the same input every time; `builder` uses 0.1, so the writing roles may differ a
 little from run to run. This setting only takes effect with the `openrouter`
 provider. The `claude-cli` and `codex-cli` providers ignore it.
+</details>
 
 ```mermaid
 flowchart LR
@@ -454,22 +472,7 @@ and limits are in
 
 ### Retrieval
 
-Sources are tiered so the default run stays bounded:
-
-- **Required:** Crossref metadata.
-- **Optional, on by default:** Exa and OpenAlex. An optional source that cannot
-  run is skipped and the run continues.
-- **Opt-in:** arXiv, Europe PMC, and the two live-web sources. This keeps the
-  unbounded arXiv full-PDF loader out of default runs.
-
-Retrieval runs at two points. Claim-level retrieval happens once per run, and
-the same pool is offered to every edge. The experiment stage then adds one
-targeted methods query per confirmed hypothesis.
-
-Retrieved records are de-duplicated across sources, quote-checked, ranked by
-relevance and trust tier, and cached per run. Exa is configured as one retrieval
-source inside that shared flow; see
-[paper retrieval](docs/guides/paper_retrieval.md).
+See [retrieval](docs/guides/paper_retrieval.md) for the detailed retrieval configuration.
 
 ## Cost Measurement
 
@@ -495,26 +498,17 @@ provider's own billing.
 
 ### Research Discussion
 
-Five reports in [docs/research](docs/research/README.md) review the system
-from complementary angles. Each has a short decision version beside it.
+Four reports in [docs/research](docs/research/README.md) review the system
+from complementary angles. Each has a short hype version beside it (*-decision.md).
 
 - [Claims Before Causes](docs/research/claims-before-causes.md): why the current
   pipeline stores the relationships that sources assert as a claim graph
-  rather than as a causal model, why it carries causal typing and
-  deterministic measurement anyway, and the conditions under which claims
-  could be promoted to causes.
+  rather than as a causal model?
 - [From Traceable Claims to Testable Hypotheses](docs/research/traceable-claims-to-testable-hypotheses.md):
-  what each check in the implementation establishes, what still needs
-  evidence, and where the system sits among contemporary discovery systems.
+  what the current implementation contributes to scientific reasoning?
 
-- [Which Agents Go Local?](docs/research/which-agents-go-local.md): since the
-  deterministic core rather than model judgment carries the guarantees, which
-  agent roles can run on small local models, and what a weaker backend
-  changes silently.
+- [Which Agents Go Local?](docs/research/which-agents-go-local.md): running agents locally might be the most effective way to boost productivity with AI, and avoiding the dramatic loss from cyberattacks at the same time. However, which stages can be handed off to local agents?
 - [Retrieval for Local Agents](docs/research/retrieval-for-local-agents.md):
-  what retrieval substitutes for (stored knowledge) and what still needs a
-  model (reading evidence into a typed judgment), role by role.
-- [Other Relevant Qestions](docs/research/research-agenda.md): four studies that
-  follow from those findings, in a chain: expose claims to counterevidence,
-  calibrate acceptance, revise conclusions with execution feedback, and
-  demonstrate researcher benefit.
+  what retrieval substitutes for storing knowledge and what still needs an
+  AI agent to read evidence and come up with a judgment?
+
